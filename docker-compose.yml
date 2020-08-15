@@ -1,0 +1,125 @@
+version: '3'
+services:
+  # This is capible to relay via gmail, Amazon SES, or generic relays
+  # See: https://hub.docker.com/r/namshi/smtp
+  mail:
+    image: namshi/smtp
+
+  redis:
+    image: redis:latest
+    restart: always
+    read_only: true
+    volumes:
+      - misp_redis:/data
+
+  db:
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    read_only: true
+    cap_add:
+      - SYS_NICE
+    environment:
+      - "MYSQL_USER=misp"
+      - "MYSQL_PASSWORD=example"
+      - "MYSQL_ROOT_PASSWORD=password"
+      - "MYSQL_DATABASE=misp"
+    tmpfs:
+      - /run/mysqld
+      - /tmp
+    volumes:
+      - misp_db:/var/lib/mysql
+
+  misp-modules:
+    image: epuzanov/misp-modules:latest
+    restart: always
+    read_only: true
+    build:
+        context: modules/.
+        args:
+            - MODULES_TAG=${MODULES_TAG}
+    environment:
+      - "REDIS_BACKEND=redis"
+    depends_on:
+      - redis
+      - db
+
+  misp:
+    image: epuzanov/misp-fpm:latest
+    restart: always
+    read_only: true
+    build:
+        context: misp/.
+        args:
+            - MISP_TAG=${MISP_TAG}
+            - PHP_API=${PHP_API}
+            - PHP_VER=${PHP_VER}
+    depends_on:
+      - redis
+      - db
+      - misp-modules
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - misp_conf:/var/www/MISP/app/Config
+      - misp_files:/var/www/MISP/app/files
+      - misp_tmp:/var/www/MISP/app/tmp
+      - misp_webroot:/var/www/MISP/app/webroot
+    environment:
+      - "HOSTNAME=https://localhost"
+      - "REDIS_FQDN=redis"
+      - "INIT=true"
+      # Database Configuration (And their defaults)
+#      - "MYSQL_HOST=db"
+#      - "MYSQL_USER=misp"
+#      - "MYSQL_PASSWORD=example"
+#      - "MYSQL_DATABASE=misp"
+
+  cron:
+    image: epuzanov/misp-fpm:latest
+    restart: always
+    read_only: true
+    depends_on:
+      - misp
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - misp_conf:/var/www/MISP/app/Config
+      - misp_files:/var/www/MISP/app/files
+      - misp_tmp:/var/www/MISP/app/tmp
+#      - misp_cron:/etc/cron.d
+    environment:
+      - "REDIS_FQDN=redis"
+      - "INIT=false"
+      - "CRON=true" # Start CRON
+      - "FPM=false" # Do not start FPM and workers
+
+  web:
+    image: nginx:latest
+    restart: always
+    read_only: true
+    tmpfs:
+      - /run
+      - /var/cache/nginx
+    volumes:
+      - ./web/entrypoint.sh:/docker-entrypoint.d/30-create-certs.sh
+      - ./web/misp.conf:/etc/nginx/conf.d/default.conf:ro
+      - misp_certs:/etc/nginx/certs
+      - misp_webroot:/var/www/MISP/app/webroot:ro
+    depends_on:
+      - misp
+    ports:
+      - 80:80
+      - 443:443
+
+volumes:
+    misp_db:
+    misp_redis:
+    misp_conf:
+#    misp_cron:
+    misp_files:
+    misp_tmp:
+    misp_webroot:
+    misp_certs:

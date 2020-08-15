@@ -1,0 +1,7 @@
+20 2 * * * www-data /var/www/MISP/app/Console/cake Server cacheFeed 1 all >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
+30 2 * * * www-data /var/www/MISP/app/Console/cake Server fetchFeed 1 all >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
+00 3 * * * www-data /var/www/MISP/app/Console/cake Admin updateGalaxies >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
+10 3 * * * www-data /var/www/MISP/app/Console/cake Admin updateTaxonomies >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
+20 3 * * * www-data /var/www/MISP/app/Console/cake Admin updateWarningLists >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
+30 3 * * * www-data /var/www/MISP/app/Console/cake Admin updateNoticeLists >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
+45 3 * * * www-data /var/www/MISP/app/Console/cake Admin updateObjectTemplates >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
