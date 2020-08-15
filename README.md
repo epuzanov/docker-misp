@@ -76,6 +76,6 @@ Updating the images should be as simple as `docker-compose pull` which, unless c
     -   PreBuild python modules, and only pull submodules we need: 800MB
     -   PreBuild PHP modules: 596MB
 
--   Modules (Saved: 737MB)
+-   Modules (Saved: 732MB)
     -   Original: 1.36GB
-    -   Pre-build modules: 656MB
+    -   Pre-build modules: 661MB
