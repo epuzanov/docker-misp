@@ -1,12 +1,12 @@
 FROM composer:1.9 as composer-build
-    ARG MISP_TAG=v2.4.129
+    ARG MISP_TAG=v2.4.131
     WORKDIR /tmp
     ADD https://raw.githubusercontent.com/MISP/MISP/${MISP_TAG}/app/composer.json /tmp
     RUN composer install --ignore-platform-reqs
 
 FROM debian:buster-slim as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.129
+    ARG MISP_TAG=v2.4.131
     ARG PHP_VER=7.3
     ARG PHP_API=20180731
 
@@ -121,7 +121,7 @@ FROM debian:buster-slim as build
 
 FROM debian:buster-slim
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.129
+    ARG MISP_TAG=v2.4.131
     ARG PHP_VER=7.3
     ARG PHP_API=20180731
 
