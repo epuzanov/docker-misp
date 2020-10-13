@@ -23,6 +23,7 @@ FROM debian:buster-slim as build
         php-fpm \
         php-gd \
         php-gnupg \
+        php-intl \
         php-mbstring \
         php-mysql \
         php-redis \
@@ -138,6 +139,7 @@ FROM debian:buster-slim
         php-fpm \
         php-gd \
         php-gnupg \
+        php-intl \
         php-mbstring \
         php-mysql \
         php-redis \
