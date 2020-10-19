@@ -20,7 +20,7 @@ This is based on some of the work from the CoolAcid's docker build.
 
 builds the images automatically based on git tags. I try and tag using the following details
 
-***v\[MISP Version]\[Our build version]***
+***\[MISP Version]\[Our build version]***
 
 -   MISP version is the MISP tag we're building
 -   Our build version is the iteration for our changes with the same MISP version
