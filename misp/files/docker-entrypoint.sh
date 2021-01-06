@@ -26,7 +26,7 @@ init_misp_config(){
     if [ ! -f $MISP_APP_CONFIG_PATH/resque_config.php ]
     then
         install -g www-data -o www-data  /var/www/MISP/INSTALL/setup/config.php $MISP_APP_CONFIG_PATH/resque_config.php
-        sed -i "s/'localhost'/'$REDIS_FQDN'/" $MISP_APP_CONFIG_PATH/resque_config.php
+        sed -i "s/'127.0.0.1'/'$REDIS_FQDN'/" $MISP_APP_CONFIG_PATH/resque_config.php
         sed -i "s/App::pluginPath('CakeResque') . 'tmp'/TMP . 'resque'/" $MISP_APP_CONFIG_PATH/resque_config.php
     fi
     if [ ! -f $MISP_APP_CONFIG_PATH/database.php ]
