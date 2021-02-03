@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     RUN mkdir /wheel
     WORKDIR /srv
 
+    RUN pip3 install python-socketio==5.0.4
+
     RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /srv/misp-modules; \
         cd /srv/misp-modules || exit; sed -i 's/-e //g' REQUIREMENTS; pip3 wheel -r REQUIREMENTS --no-cache-dir -w /wheel/
 
