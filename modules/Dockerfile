@@ -18,17 +18,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     RUN mkdir /wheel
     WORKDIR /srv
 
-    RUN pip3 install python-socketio==5.0.4
-
-    RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /srv/misp-modules; \
-        cd /srv/misp-modules || exit; sed -i 's/-e //g' REQUIREMENTS; pip3 wheel -r REQUIREMENTS --no-cache-dir -w /wheel/
-
     RUN git clone --depth 1 https://github.com/stricaud/faup.git /srv/faup; \
         cd /srv/faup/build || exit; cmake .. && make install; \
-        cd /srv/faup/src/lib/bindings/python || exit; pip3 wheel --no-cache-dir -w /wheel/ .
+        cd /srv/faup/src/lib/bindings/python || exit; pip3 install . --no-cache-dir
 
-    RUN pip3 install /wheel/*.whl; ldconfig; \
-        rm -rf /usr/local/lib/python3.7/site-packages/test; python3 -m compileall /usr/local/lib/python3.7
+    RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /srv/misp-modules; \
+        cd /srv/misp-modules || exit; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
+        pip3 install . --no-cache-dir
+
+    RUN ldconfig; \
+        rm -rf /usr/local/lib/python3.7/site-packages/test; \
+        python3 -m compileall /usr/local/lib/python3.7
 
 FROM python:3.7-slim-buster
 
