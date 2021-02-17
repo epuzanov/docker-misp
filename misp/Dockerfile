@@ -66,6 +66,8 @@ FROM debian:buster-slim as build
 
     WORKDIR /tmp
 
+    ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
     # build python-mixbox
     RUN git clone --depth 1 https://github.com/CybOXProject/mixbox.git; \
         cd mixbox || exit; python3 setup.py bdist_wheel -d /wheels
