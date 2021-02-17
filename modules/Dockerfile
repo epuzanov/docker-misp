@@ -26,6 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         cd /srv/misp-modules || exit; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
         pip3 install . --no-cache-dir
 
+    RUN pip3 install censys --no-cache-dir
+
     RUN ldconfig; \
         rm -rf /usr/local/lib/python3.7/site-packages/test; \
         python3 -m compileall /usr/local/lib/python3.7
