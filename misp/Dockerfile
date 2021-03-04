@@ -193,6 +193,7 @@ FROM debian:buster-slim
 
     # MISP
     COPY --chown=www-data:www-data --from=build /var/www/MISP /var/www/MISP
+    RUN ln -s /usr/local/lib/python3.7/dist-packages/pymisp /var/www/MISP/PyMISP/pymisp
 
     # Entrypoints
     COPY files/start.sh /
