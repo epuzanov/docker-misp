@@ -1,6 +1,6 @@
 FROM python:3.7-slim-buster  as builder
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.136
+ARG MODULES_TAG=v2.4.141
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
                 cmake \
@@ -25,8 +25,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /srv/misp-modules; \
         cd /srv/misp-modules || exit; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
         pip3 install . --no-cache-dir
-
-    RUN pip3 install censys --no-cache-dir
 
     RUN ldconfig; \
         rm -rf /usr/local/lib/python3.7/site-packages/test; \
