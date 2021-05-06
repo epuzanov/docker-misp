@@ -1,6 +1,6 @@
 FROM python:3.7-slim-buster  as builder
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.141
+ARG MODULES_TAG=v2.4.142
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
                 cmake \
