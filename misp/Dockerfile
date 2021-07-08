@@ -1,12 +1,12 @@
 FROM composer:1.9 as composer-build
-    ARG MISP_TAG=v2.4.142
+    ARG MISP_TAG=v2.4.146
     WORKDIR /tmp
     ADD https://raw.githubusercontent.com/MISP/MISP/${MISP_TAG}/app/composer.json /tmp
     RUN composer install --ignore-platform-reqs
 
 FROM debian:buster-slim as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.142
+    ARG MISP_TAG=v2.4.146
     ARG PHP_VER=7.3
     ARG PHP_API=20180731
 
@@ -20,23 +20,29 @@ FROM debian:buster-slim as build
         mariadb-client-core-10.3 \
         openssl \
         php \
+        php-bcmath \
+        php-cli \
         php-fpm \
         php-gd \
         php-gnupg \
         php-intl \
+        php-json \
         php-mbstring \
         php-mysql \
+        php-readline \
         php-redis \
         php-xml \
         php-zip \
+        php7.3-opcache \
         python3 \
         python3-dateutil \
         python3-jsonschema \
         python3-lxml \
         python3-magic \
+        python3-nose \
         python3-ply \
         python3-redis \
-        python3-requests \
+        python3-requests-mock \
         python3-simplejson \
         python3-tz \
         python3-wrapt \
@@ -124,7 +130,7 @@ FROM debian:buster-slim as build
 
 FROM debian:buster-slim
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.142
+    ARG MISP_TAG=v2.4.146
     ARG PHP_VER=7.3
     ARG PHP_API=20180731
 
@@ -138,23 +144,29 @@ FROM debian:buster-slim
         mariadb-client-core-10.3 \
         openssl \
         php \
+        php-bcmath \
+        php-cli \
         php-fpm \
         php-gd \
         php-gnupg \
         php-intl \
+        php-json \
         php-mbstring \
         php-mysql \
+        php-readline \
         php-redis \
         php-xml \
         php-zip \
+        php7.3-opcache \
         python3 \
         python3-dateutil \
         python3-jsonschema \
         python3-lxml \
         python3-magic \
+        python3-nose \
         python3-ply \
         python3-redis \
-        python3-requests \
+        python3-requests-mock \
         python3-simplejson \
         python3-tz \
         python3-wrapt \
