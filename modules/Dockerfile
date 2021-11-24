@@ -1,6 +1,6 @@
 FROM python:3.7-slim-buster  as builder
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.142
+ARG MODULES_TAG=v2.4.151
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
             curl \
@@ -58,7 +58,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 FROM python:3.7-slim-buster
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.142
+ARG MODULES_TAG=v2.4.151
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
             curl \
