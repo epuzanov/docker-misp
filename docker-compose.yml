@@ -12,6 +12,18 @@ services:
     volumes:
       - misp_redis:/data
 
+  clamav:
+    image: clamav/clamav:latest
+    restart: always
+    read_only: true
+    volumes:
+      - misp_clamdb:/var/lib/clamav
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/lock
+      - /var/log/clamav
+
   db:
     image: mysql:latest
     command: --default-authentication-plugin=mysql_native_password
@@ -43,6 +55,9 @@ services:
     depends_on:
       - redis
       - db
+    tmpfs:
+      - /run
+      - /tmp
 
   misp:
     image: epuzanov/misp-fpm:latest
@@ -117,6 +132,7 @@ services:
 volumes:
     misp_db:
     misp_redis:
+    misp_clamdb:
     misp_conf:
 #    misp_cron:
     misp_files:
