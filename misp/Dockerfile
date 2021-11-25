@@ -15,6 +15,7 @@ FROM debian:bullseye-slim as build
         cron \
         git \
         gpg gpg-agent \
+        libbrotli1 \
         libfuzzy2 \
         librdkafka1 \
         mariadb-client-core-10.5 \
@@ -37,6 +38,7 @@ FROM debian:bullseye-slim as build
         php7.4-opcache \
         python3 \
         python3-antlr4 \
+        python3-brotli \
         python3-deprecated \
         python3-jsonschema \
         python3-lxml \
@@ -60,6 +62,7 @@ FROM debian:bullseye-slim as build
     RUN apt-get update; apt-get install -y --no-install-recommends \
         ca-certificates \
         gcc \
+        libbrotli-dev \
         libfuzzy-dev \
         librdkafka-dev \
         make \
@@ -102,6 +105,14 @@ FROM debian:bullseye-slim as build
     RUN git clone --depth 1 https://github.com/MISP/PyMISP.git; \
         cd PyMISP || exit; python3 setup.py bdist_wheel -d /wheels
 
+    # build brotli
+    RUN git clone --recursive --depth=1 https://github.com/kjdev/php-ext-brotli.git && \
+        cd php-ext-brotli && \
+        phpize7.4 && \
+        ./configure --with-libbrotli --with-php-config=/usr/bin/php-config7.4 && \
+        make && \
+        make install
+
     # build pydeep
     RUN git clone --depth 1 https://github.com/coolacid/pydeep.git; \
         cd pydeep || exit; python3 setup.py bdist_wheel -d /wheels
@@ -143,6 +154,7 @@ FROM debian:bullseye-slim
         cron \
         git \
         gpg gpg-agent \
+        libbrotli1 \
         libfuzzy2 \
         librdkafka1 \
         mariadb-client-core-10.5 \
@@ -165,6 +177,7 @@ FROM debian:bullseye-slim
         php7.4-opcache \
         python3 \
         python3-antlr4 \
+        python3-brotli \
         python3-deprecated \
         python3-jsonschema \
         python3-lxml \
@@ -201,12 +214,15 @@ FROM debian:bullseye-slim
     COPY --from=build /usr/local/lib/python3.9/dist-packages /usr/local/lib/python3.9/dist-packages
 
     # PHP Modules
+    COPY --from=build /usr/lib/php/${PHP_API}/brotli.so /usr/lib/php/${PHP_API}/brotli.so
     COPY --from=build /usr/lib/php/${PHP_API}/rdkafka.so /usr/lib/php/${PHP_API}/rdkafka.so
     COPY --from=build /usr/lib/php/${PHP_API}/ssdeep.so /usr/lib/php/${PHP_API}/ssdeep.so
     RUN echo "extension=rdkafka.so" > "/etc/php/${PHP_VER}/mods-available/rdkafka.ini" && \
         echo "extension=ssdeep.so" > "/etc/php/${PHP_VER}/mods-available/ssdeep.ini" && \
+        echo "extension=brotli.so" > "/etc/php/${PHP_VER}/mods-available/brotli.ini" && \
         phpenmod gnupg && \
         phpenmod redis && \
+        phpenmod brotli && \
         phpenmod rdkafka && \
         phpenmod ssdeep
 
