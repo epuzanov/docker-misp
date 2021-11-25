@@ -7,6 +7,7 @@ services:
 
   redis:
     image: redis:latest
+    command: --requirepass redispassword
     restart: always
     read_only: true
     volumes:
@@ -84,6 +85,7 @@ services:
     environment:
       - "HOSTNAME=https://localhost"
       - "REDIS_FQDN=redis"
+      - "REDIS_PASSWORD=redispassword"
       - "INIT=true"
       # Database Configuration (And their defaults)
 #      - "MYSQL_HOST=db"

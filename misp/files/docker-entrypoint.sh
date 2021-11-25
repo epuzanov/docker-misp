@@ -7,6 +7,7 @@ MISP_APP_CONFIG_PATH=/var/www/MISP/app/Config
 [ -z "$MYSQL_PASSWORD" ] && MYSQL_PASSWORD=example
 [ -z "$MYSQL_DATABASE" ] && MYSQL_DATABASE=misp
 [ -z "$REDIS_FQDN" ] && REDIS_FQDN=redis
+[ -z "$REDIS_PASSWORD" ] && REDIS_PASSWORD=
 [ -z "$MYSQLCMD" ] && MYSQLCMD="mysql -u $MYSQL_USER -p$MYSQL_PASSWORD -P $MYSQL_PORT -h $MYSQL_HOST -r -N  $MYSQL_DATABASE"
 
 init_misp_config(){
@@ -28,6 +29,10 @@ init_misp_config(){
         install -g www-data -o www-data  /var/www/MISP/INSTALL/setup/config.php $MISP_APP_CONFIG_PATH/resque_config.php
         sed -i "s/'127.0.0.1'/'$REDIS_FQDN'/" $MISP_APP_CONFIG_PATH/resque_config.php
         sed -i "s/App::pluginPath('CakeResque') . 'tmp'/TMP . 'resque'/" $MISP_APP_CONFIG_PATH/resque_config.php
+        if [ ! -z "$REDIS_PASSWORD" ]
+        then
+            sed -i "s/'password' => null/'password' => '$REDIS_PASSWORD'/" $MISP_APP_CONFIG_PATH/resque_config.php
+        fi
     fi
     if [ ! -f $MISP_APP_CONFIG_PATH/database.php ]
     then
@@ -54,6 +59,7 @@ init_misp_config(){
         echo "Configure MISP | Set defaults in config.php"
         install -g www-data -o www-data $MISP_APP_CONFIG_PATH.dist/config.default.php $MISP_APP_CONFIG_PATH/config.php
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.redis_host" "$REDIS_FQDN"
+        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.redis_password" "$REDIS_PASSWORD"
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.baseurl" "$HOSTNAME"
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.python_bin" $(which python3)
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.tmpdir" "/var/www/MISP/app/tmp"
@@ -61,7 +67,11 @@ init_misp_config(){
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.attachment_scan_module" "clamav"
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.live" true
 
+        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "SimpleBackgroundJobs.redis_host" "$REDIS_FQDN"
+        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "SimpleBackgroundJobs.redis_password" "$REDIS_PASSWORD"
+
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.ZeroMQ_redis_host" "$REDIS_FQDN"
+        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.ZeroMQ_redis_password" "$REDIS_PASSWORD"
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.ZeroMQ_enable" true
 
         sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Enrichment_services_enable" true
