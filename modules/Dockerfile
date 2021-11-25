@@ -1,4 +1,4 @@
-FROM python:3.7-slim-buster  as builder
+FROM debian:bullseye-slim as builder
 ENV DEBIAN_FRONTEND noninteractive
 ARG MODULES_TAG=v2.4.151
 
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
             libxext6 \
             libxrender1 \
             libzbar0 \
+            python3 \
             tesseract-ocr \
             zbar-tools \
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
@@ -53,10 +54,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pip3 install . --no-cache-dir
 
     RUN ldconfig; \
-        rm -rf /usr/local/lib/python3.7/site-packages/test; \
-        python3 -m compileall /usr/local/lib/python3.7
+        python3 -m compileall /usr/local/lib/python3.9 || :
 
-FROM python:3.7-slim-buster
+FROM debian:bullseye-slim
 ENV DEBIAN_FRONTEND noninteractive
 ARG MODULES_TAG=v2.4.151
 
@@ -74,6 +74,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
             libxext6 \
             libxrender1 \
             libzbar0 \
+            python3 \
             tesseract-ocr \
             zbar-tools \
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*

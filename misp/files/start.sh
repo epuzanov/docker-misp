@@ -5,7 +5,7 @@ _term() {
     then
         kill -TERM `cat /run/crond.pid` 2>/dev/null
     fi
-    if [ -f /run/php7.3-fpm.pid ]
+    if [ -f /run/php7.4-fpm.pid ]
     then
         if [ -f /var/www/MISP/app/files/scripts/tmp/mispzmq.pid ]
         then
@@ -29,7 +29,7 @@ fi
 if [ "$FPM" != false ]
 then
     sudo -u www-data /var/www/MISP/app/Console/worker/start.sh
-    /usr/sbin/php-fpm7.3 -R -F &
+    /usr/sbin/php-fpm7.4 -R -F &
 else
     sudo -u www-data touch /var/www/MISP/app/tmp/logs/cron.log
     tail -f /var/www/MISP/app/tmp/logs/cron.log &

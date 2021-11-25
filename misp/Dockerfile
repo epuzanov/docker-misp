@@ -4,11 +4,11 @@ FROM composer:1.9 as composer-build
     ADD https://raw.githubusercontent.com/MISP/MISP/${MISP_TAG}/app/composer.json /tmp
     RUN composer install --ignore-platform-reqs
 
-FROM debian:buster-slim as build
+FROM debian:bullseye-slim as build
     ENV DEBIAN_FRONTEND noninteractive
     ARG MISP_TAG=v2.4.151
-    ARG PHP_VER=7.3
-    ARG PHP_API=20180731
+    ARG PHP_VER=7.4
+    ARG PHP_API=20190902
 
     # OS Packages
     RUN apt-get update; apt-get install -y --no-install-recommends \
@@ -17,9 +17,10 @@ FROM debian:buster-slim as build
         gpg gpg-agent \
         libfuzzy2 \
         librdkafka1 \
-        mariadb-client-core-10.3 \
+        mariadb-client-core-10.5 \
         openssl \
         php \
+        php-apcu \
         php-bcmath \
         php-cli \
         php-fpm \
@@ -33,14 +34,16 @@ FROM debian:buster-slim as build
         php-redis \
         php-xml \
         php-zip \
-        php7.3-opcache \
+        php7.4-opcache \
         python3 \
-        python3-dateutil \
+        python3-antlr4 \
+        python3-deprecated \
         python3-jsonschema \
         python3-lxml \
         python3-magic \
         python3-nose \
         python3-ply \
+        python3-plyara \
         python3-redis \
         python3-requests-mock \
         python3-simplejson \
@@ -60,6 +63,7 @@ FROM debian:buster-slim as build
         libfuzzy-dev \
         librdkafka-dev \
         make \
+        php-curl \
         php-dev \
         php-pear \
         python3-dev \
@@ -128,11 +132,11 @@ FROM debian:buster-slim as build
         touch /var/www/MISP/app/tmp/resque/empty
 
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
     ARG MISP_TAG=v2.4.151
-    ARG PHP_VER=7.3
-    ARG PHP_API=20180731
+    ARG PHP_VER=7.4
+    ARG PHP_API=20190902
 
     # OS Packages
     RUN apt-get update; apt-get install -y --no-install-recommends \
@@ -141,9 +145,10 @@ FROM debian:buster-slim
         gpg gpg-agent \
         libfuzzy2 \
         librdkafka1 \
-        mariadb-client-core-10.3 \
+        mariadb-client-core-10.5 \
         openssl \
         php \
+        php-apcu \
         php-bcmath \
         php-cli \
         php-fpm \
@@ -157,14 +162,16 @@ FROM debian:buster-slim
         php-redis \
         php-xml \
         php-zip \
-        php7.3-opcache \
+        php7.4-opcache \
         python3 \
-        python3-dateutil \
+        python3-antlr4 \
+        python3-deprecated \
         python3-jsonschema \
         python3-lxml \
         python3-magic \
         python3-nose \
         python3-ply \
+        python3-plyara \
         python3-redis \
         python3-requests-mock \
         python3-simplejson \
@@ -191,7 +198,7 @@ FROM debian:buster-slim
         sed -i "s/run\/php/run/" /etc/php/${PHP_VER}/fpm/php-fpm.conf
 
     # Python Modules
-    COPY --from=build /usr/local/lib/python3.7/dist-packages /usr/local/lib/python3.7/dist-packages
+    COPY --from=build /usr/local/lib/python3.9/dist-packages /usr/local/lib/python3.9/dist-packages
 
     # PHP Modules
     COPY --from=build /usr/lib/php/${PHP_API}/rdkafka.so /usr/lib/php/${PHP_API}/rdkafka.so
@@ -205,7 +212,7 @@ FROM debian:buster-slim
 
     # MISP
     COPY --chown=www-data:www-data --from=build /var/www/MISP /var/www/MISP
-    RUN ln -s /usr/local/lib/python3.7/dist-packages/pymisp /var/www/MISP/PyMISP/pymisp
+    RUN ln -s /usr/local/lib/python3.9/dist-packages/pymisp /var/www/MISP/PyMISP/pymisp
 
     # Entrypoints
     COPY files/start.sh /
