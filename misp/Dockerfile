@@ -1,14 +1,10 @@
-FROM composer:1.9 as composer-build
-    ARG MISP_TAG=v2.4.151
-    WORKDIR /tmp
-    ADD https://raw.githubusercontent.com/MISP/MISP/${MISP_TAG}/app/composer.json /tmp
-    RUN composer install --ignore-platform-reqs
-
 FROM debian:bullseye-slim as build
     ENV DEBIAN_FRONTEND noninteractive
     ARG MISP_TAG=v2.4.151
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
+    ARG PATH_TO_MISP=/var/www/MISP
+    ARG WWW_USER=www-data
 
     # OS Packages
     RUN apt-get update; apt-get install -y --no-install-recommends \
@@ -75,35 +71,7 @@ FROM debian:bullseye-slim as build
         python3-wheel \
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-    RUN mkdir /wheels
-
-    WORKDIR /tmp
-
     ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-
-    # build python-mixbox
-    RUN git clone --depth 1 https://github.com/CybOXProject/mixbox.git; \
-        cd mixbox || exit; python3 setup.py bdist_wheel -d /wheels
-
-    # build python-maec
-    RUN git clone --depth 1 https://github.com/MAECProject/python-maec.git; \
-        cd python-maec || exit; python3 setup.py bdist_wheel -d /wheels
-
-    # build python-cybox
-    RUN git clone --depth 1 https://github.com/CybOXProject/python-cybox.git; \
-        cd python-cybox || exit; python3 setup.py bdist_wheel -d /wheels
-
-    # build python stix
-    RUN git clone --depth 1 https://github.com/STIXProject/python-stix.git; \
-        cd python-stix || exit; python3 setup.py bdist_wheel -d /wheels
-
-    # build STIX2.0 library to support STIX 2.0 export:
-    RUN git clone --depth 1 https://github.com/MISP/cti-python-stix2.git; \
-        cd cti-python-stix2 || exit; python3 setup.py bdist_wheel -d /wheels
-
-    # build PyMISP
-    RUN git clone --depth 1 https://github.com/MISP/PyMISP.git; \
-        cd PyMISP || exit; python3 setup.py bdist_wheel -d /wheels
 
     # build brotli
     RUN git clone --recursive --depth=1 https://github.com/kjdev/php-ext-brotli.git && \
@@ -114,40 +82,56 @@ FROM debian:bullseye-slim as build
         make install
 
     # build pydeep
-    RUN git clone --depth 1 https://github.com/coolacid/pydeep.git; \
-        cd pydeep || exit; python3 setup.py bdist_wheel -d /wheels
+    RUN pip3 install git+https://github.com/kbandla/pydeep.git lief
     RUN cp /usr/lib/x86_64-linux-gnu/libfuzzy.* /usr/lib && pecl install ssdeep
 
     # build rdkafka
     RUN cp /usr/lib/x86_64-linux-gnu/librdkafka.* /usr/lib && pecl install rdkafka
 
-    # install Python Modules
-    RUN pip3 install --no-cache-dir --upgrade six && \
-        pip3 install --no-cache-dir /wheels/*.whl lief plyara
-
     # Download MISP code
-    RUN git clone --branch ${MISP_TAG} --depth 1 https://github.com/MISP/MISP.git /var/www/MISP && \
-        cd /var/www/MISP/app && \
-        git submodule update --init --recursive . && \
-        mv /var/www/MISP/app/Config /var/www/MISP/app/Config.dist && mkdir /var/www/MISP/app/Config
+    RUN git clone --depth 1 --branch ${MISP_TAG} https://github.com/MISP/MISP.git ${PATH_TO_MISP} && \
+        git -C ${PATH_TO_MISP} submodule update --progress --init --recursive PyMISP && \
+        git -C ${PATH_TO_MISP} submodule update --progress --init --recursive app && \
+        git -C ${PATH_TO_MISP} submodule foreach --recursive git config core.filemode false && \
+        git -C ${PATH_TO_MISP} config core.filemode false && \
+        git -C ${PATH_TO_MISP} reflog expire --expire=now --all && \
+        git -C ${PATH_TO_MISP} gc --prune=now --aggressive && \
+        install -d -o ${WWW_USER} -g ${WWW_USER} -m 0755 /var/www/.composer && \
+        chown -R ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}
 
-    COPY --from=composer-build /tmp/Vendor /var/www/MISP/app/Vendor
-    COPY --from=composer-build /tmp/Plugin /var/www/MISP/app/Plugin
+    # Build and install Python modules
+    RUN cd ${PATH_TO_MISP}/app/files/scripts && \
+        for dir_name in mixbox python-cybox python-maec python-stix cti-python-stix2 misp-stix ; do cd $dir_name && python3 setup.py install && cd .. && rm -rf $dir_name && git submodule deinit --force $dir_name && git rm $dir_name ; done && \
+        pip3 install ${PATH_TO_MISP}/PyMISP && \
+        cd ${PATH_TO_MISP} && \
+        for dir_name in PyMISP app/Lib/cakephp app/Lib/random_compat app/files/scripts/misp-opendata misp-vagrant ; do mv $dir_name $dir_name\_tmp && git submodule deinit --force $dir_name && git rm $dir_name && mv $dir_name\_tmp $dir_name ; done && \
+        for dir_name in misp-decaying-models misp-galaxy misp-objects noticelists taxonomies warninglists ; do rm -rf ${PATH_TO_MISP}/app/files/$dir_name ${PATH_TO_MISP}/.git/modules/app/files/$dir_name && mkdir ${PATH_TO_MISP}/app/files/$dir_name && ln -s ../../../../app/files/$dir_name/.git ${PATH_TO_MISP}/.git/modules/app/files/$dir_name ; done && \
+        rm -rf ${PATH_TO_MISP}/.git/modules/cti-python-stix2 ${PATH_TO_MISP}/.git/modules/PyMISP ${PATH_TO_MISP}/.git/modules/app/Lib ${PATH_TO_MISP}/.git/modules/app/files/scripts ${PATH_TO_MISP}/PyMISP/pymisp /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
+        ln -s ${PATH_TO_MISP}/app/files/misp-objects /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
+        ln -s /usr/local/lib/python3.9/dist-packages/pymisp ${PATH_TO_MISP}/PyMISP/pymisp
 
-    RUN rm -f /var/www/MISP/app/Plugin/CakeResque/Config/config.php && \
-        ln -s /var/www/MISP/app/Config/resque_config.php /var/www/MISP/app/Plugin/CakeResque/Config/config.php
+    USER ${WWW_USER}
 
-    RUN mkdir /var/www/MISP/app/files/attachments && \
-        touch /var/www/MISP/app/files/attachments/empty && \
-        mkdir /var/www/MISP/app/tmp/resque && \
-        touch /var/www/MISP/app/tmp/resque/empty
+    # Install composer plugins and vendors
+    RUN cd ${PATH_TO_MISP}/app && \
+        php composer.phar install --no-dev
 
+    RUN cd ${PATH_TO_MISP}/app && \
+        mv Config Config.dist && \
+        mv files files.dist && \
+        mv webroot webroot.dist && \
+        mkdir -p Config files webroot && \
+        rm -rf files/scripts/tmp Plugin/CakeResque/Config/config.php && \
+        ln -s ${PATH_TO_MISP}/app/Config/resque_config.php ${PATH_TO_MISP}/app/Plugin/CakeResque/Config/config.php && \
+        rm -rf tmp/*
 
 FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
     ARG MISP_TAG=v2.4.151
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
+    ARG PATH_TO_MISP=/var/www/MISP
+    ARG WWW_USER=www-data
 
     # OS Packages
     RUN apt-get update; apt-get install -y --no-install-recommends \
@@ -202,6 +186,8 @@ FROM debian:bullseye-slim
         sed -i "s/max_execution_time = .*/max_execution_time = 300/" /etc/php/${PHP_VER}/fpm/php.ini && \
         sed -i "s/upload_max_filesize = .*/upload_max_filesize = 50M/" /etc/php/${PHP_VER}/fpm/php.ini && \
         sed -i "s/post_max_size = .*/post_max_size = 50M/" /etc/php/${PHP_VER}/fpm/php.ini && \
+        sed -i "s/session.sid_length = .*/session.sid_length = 32/" /etc/php/${PHP_VER}/fpm/php.ini && \
+        sed -i "s/session.use_strict_mode = .*/session.use_strict_mode = 1/" /etc/php/${PHP_VER}/fpm/php.ini && \
         sed -i "s/\/run\/php\/php.\..-fpm\.sock/9000/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
         sed -i "s/;catch_workers_output/catch_workers_output/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
         sed -i "s/;decorate_workers_output/decorate_workers_output/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
@@ -226,21 +212,27 @@ FROM debian:bullseye-slim
         phpenmod rdkafka && \
         phpenmod ssdeep
 
-    # MISP
-    COPY --chown=www-data:www-data --from=build /var/www/MISP /var/www/MISP
-    RUN ln -s /usr/local/lib/python3.9/dist-packages/pymisp /var/www/MISP/PyMISP/pymisp
+    # Copy MISP Files
+    COPY --chown=${WWW_USER}:${WWW_USER} --from=build ${PATH_TO_MISP} ${PATH_TO_MISP}
 
-    # Entrypoints
+    # Prepare directories and files
+    RUN rm -f /etc/cron.d/.placeholder /etc/cron.d/* && \
+        chmod 777 /run && \
+        chmod 777 /var/spool/cron && \
+        chmod u+s /usr/sbin/cron && \
+        chmod u+s /usr/sbin/php-fpm7.4
+
+    # Copy files
     COPY files/start.sh /
     COPY files/docker-entrypoint.sh /
-    ENTRYPOINT [ "/docker-entrypoint.sh" ]
-
-    # Cron configuration
-    RUN rm -f /etc/cron.d/.placeholder /etc/cron.d/*
     COPY files/etc /etc
 
-    # Change Workdirectory
-    WORKDIR /var/www/MISP
+    # Change Work directory
+    WORKDIR ${PATH_TO_MISP}
+
+    ENTRYPOINT [ "/docker-entrypoint.sh" ]
+
+    USER ${WWW_USER}
 
     VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp"]
 

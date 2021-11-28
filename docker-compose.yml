@@ -102,6 +102,7 @@ services:
     tmpfs:
       - /run
       - /tmp
+      - /var/spool/cron
     volumes:
       - misp_conf:/var/www/MISP/app/Config
       - misp_files:/var/www/MISP/app/files

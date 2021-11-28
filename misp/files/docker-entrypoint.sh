@@ -1,6 +1,8 @@
 #!/bin/bash
 
-MISP_APP_CONFIG_PATH=/var/www/MISP/app/Config
+PATH_TO_MISP=/var/www/MISP
+PATH_TO_MISP_CONFIG=$PATH_TO_MISP/app/Config
+CAKE=$PATH_TO_MISP/app/Console/cake
 [ -z "$MYSQL_HOST" ] && MYSQL_HOST=db
 [ -z "$MYSQL_PORT" ] && MYSQL_PORT=3306
 [ -z "$MYSQL_USER" ] && MYSQL_USER=misp
@@ -11,81 +13,83 @@ MISP_APP_CONFIG_PATH=/var/www/MISP/app/Config
 [ -z "$MYSQLCMD" ] && MYSQLCMD="mysql -u $MYSQL_USER -p$MYSQL_PASSWORD -P $MYSQL_PORT -h $MYSQL_HOST -r -N  $MYSQL_DATABASE"
 
 init_misp_config(){
-    if [ ! -f $MISP_APP_CONFIG_PATH/routes.php ]
+    if [ ! -f $PATH_TO_MISP_CONFIG/routes.php ]
     then
-        install -g www-data -o www-data $MISP_APP_CONFIG_PATH.dist/routes.php $MISP_APP_CONFIG_PATH/routes.php
+        cp $PATH_TO_MISP_CONFIG.dist/routes.php $PATH_TO_MISP_CONFIG/routes.php
     fi
-    if [ ! -f $MISP_APP_CONFIG_PATH/bootstrap.php ]
+    if [ ! -f $PATH_TO_MISP_CONFIG/bootstrap.php ]
     then
-        install -g www-data -o www-data  $MISP_APP_CONFIG_PATH.dist/bootstrap.default.php $MISP_APP_CONFIG_PATH/bootstrap.php
+        cp $PATH_TO_MISP_CONFIG.dist/bootstrap.default.php $PATH_TO_MISP_CONFIG/bootstrap.php
     fi
-    if [ ! -f $MISP_APP_CONFIG_PATH/core.php ]
+    if [ ! -f $PATH_TO_MISP_CONFIG/core.php ]
     then
-        install -g www-data -o www-data  $MISP_APP_CONFIG_PATH.dist/core.default.php $MISP_APP_CONFIG_PATH/core.php
-        sed -i "s/'php',/'cake',/" $MISP_APP_CONFIG_PATH/core.php
+        cp $PATH_TO_MISP_CONFIG.dist/core.default.php $PATH_TO_MISP_CONFIG/core.php
+        sed -i "s/'php',/'cake',/" $PATH_TO_MISP_CONFIG/core.php
     fi
-    if [ ! -f $MISP_APP_CONFIG_PATH/resque_config.php ]
+    if [ ! -f $PATH_TO_MISP_CONFIG/resque_config.php ]
     then
-        install -g www-data -o www-data  /var/www/MISP/INSTALL/setup/config.php $MISP_APP_CONFIG_PATH/resque_config.php
-        sed -i "s/'127.0.0.1'/'$REDIS_FQDN'/" $MISP_APP_CONFIG_PATH/resque_config.php
-        sed -i "s/App::pluginPath('CakeResque') . 'tmp'/TMP . 'resque'/" $MISP_APP_CONFIG_PATH/resque_config.php
+        cp $PATH_TO_MISP/INSTALL/setup/config.php $PATH_TO_MISP_CONFIG/resque_config.php
+        sed -i "s/'127.0.0.1'/'$REDIS_FQDN'/" $PATH_TO_MISP_CONFIG/resque_config.php
+        sed -i "s/App::pluginPath('CakeResque') . 'tmp'/TMP . 'resque'/" $PATH_TO_MISP_CONFIG/resque_config.php
         if [ ! -z "$REDIS_PASSWORD" ]
         then
-            sed -i "s/'password' => null/'password' => '$REDIS_PASSWORD'/" $MISP_APP_CONFIG_PATH/resque_config.php
+            sed -i "s/'password' => null/'password' => '$REDIS_PASSWORD'/" $PATH_TO_MISP_CONFIG/resque_config.php
         fi
     fi
-    if [ ! -f $MISP_APP_CONFIG_PATH/database.php ]
+    if [ ! -f $PATH_TO_MISP_CONFIG/database.php ]
     then
         echo "Configure MISP | Set DB User, Password and Host in database.php"
-        install -g www-data -o www-data  $MISP_APP_CONFIG_PATH.dist/database.default.php $MISP_APP_CONFIG_PATH/database.php
-        sed -i "s/localhost/$MYSQL_HOST/" $MISP_APP_CONFIG_PATH/database.php
-        sed -i "s/db\s*login/$MYSQL_USER/" $MISP_APP_CONFIG_PATH/database.php
-        sed -i "s/db\s*password/$MYSQL_PASSWORD/" $MISP_APP_CONFIG_PATH/database.php
-        sed -i "s/'database' => 'misp'/'database' => '$MYSQL_DATABASE'/" $MISP_APP_CONFIG_PATH/database.php
+        cp $PATH_TO_MISP_CONFIG.dist/database.default.php $PATH_TO_MISP_CONFIG/database.php
+        sed -i "s/localhost/$MYSQL_HOST/" $PATH_TO_MISP_CONFIG/database.php
+        sed -i "s/db\s*login/$MYSQL_USER/" $PATH_TO_MISP_CONFIG/database.php
+        sed -i "s/db\s*password/$MYSQL_PASSWORD/" $PATH_TO_MISP_CONFIG/database.php
+        sed -i "s/'database' => 'misp'/'database' => '$MYSQL_DATABASE'/" $PATH_TO_MISP_CONFIG/database.php
     fi
-    if [ ! -f $MISP_APP_CONFIG_PATH/email.php ]
+    if [ ! -f $PATH_TO_MISP_CONFIG/email.php ]
     then
-        install -g www-data -o www-data  $MISP_APP_CONFIG_PATH.dist/email.php $MISP_APP_CONFIG_PATH/email.php
-        sed -i -E "/\s+public .smtp = array./,/\s+public .fast = array./{;/\s+public .fast = array./!{;H;b;};x;p;x;}" $MISP_APP_CONFIG_PATH/email.php
-        sed -i -E "/\s+'transport'\s+=>\s+'Mail'/,/\s+public .smtp = array./d" $MISP_APP_CONFIG_PATH/email.php
-        sed -i "s/'localhost'/'mail'/" $MISP_APP_CONFIG_PATH/email.php
-        sed -i "s/'username'/\/\/'username'/" $MISP_APP_CONFIG_PATH/email.php
-        sed -i "s/'password'/\/\/'password'/" $MISP_APP_CONFIG_PATH/email.php
-        sed -i "s/'\(site\|you\)@localhost'/'misp-dev@admin.test'/" $MISP_APP_CONFIG_PATH/email.php
-        sed -i "s/'My Site'/'Misp DEV'/" $MISP_APP_CONFIG_PATH/email.php
+        cp $PATH_TO_MISP_CONFIG.dist/email.php $PATH_TO_MISP_CONFIG/email.php
+        sed -i -E "/\s+public .smtp = array./,/\s+public .fast = array./{;/\s+public .fast = array./!{;H;b;};x;p;x;}" $PATH_TO_MISP_CONFIG/email.php
+        sed -i -E "/\s+'transport'\s+=>\s+'Mail'/,/\s+public .smtp = array./d" $PATH_TO_MISP_CONFIG/email.php
+        sed -i "s/'localhost'/'mail'/" $PATH_TO_MISP_CONFIG/email.php
+        sed -i "s/'username'/\/\/'username'/" $PATH_TO_MISP_CONFIG/email.php
+        sed -i "s/'password'/\/\/'password'/" $PATH_TO_MISP_CONFIG/email.php
+        sed -i "s/'\(site\|you\)@localhost'/'misp-dev@admin.test'/" $PATH_TO_MISP_CONFIG/email.php
+        sed -i "s/'My Site'/'Misp DEV'/" $PATH_TO_MISP_CONFIG/email.php
     fi
-    if [ ! -f $MISP_APP_CONFIG_PATH/config.php ]
+    if [ ! -f $PATH_TO_MISP_CONFIG/config.php ]
     then
         echo "Configure MISP | Set defaults in config.php"
-        install -g www-data -o www-data $MISP_APP_CONFIG_PATH.dist/config.default.php $MISP_APP_CONFIG_PATH/config.php
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.redis_host" "$REDIS_FQDN"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.redis_password" "$REDIS_PASSWORD"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.baseurl" "$HOSTNAME"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.python_bin" $(which python3)
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.tmpdir" "/var/www/MISP/app/tmp"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.attachments_dir" "/var/www/MISP/app/files/attachments"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.attachment_scan_module" "clamav"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "MISP.live" true
+        cp $PATH_TO_MISP_CONFIG.dist/config.default.php $PATH_TO_MISP_CONFIG/config.php
+        $CAKE Admin setSetting "MISP.redis_host" "$REDIS_FQDN"
+        $CAKE Admin setSetting "MISP.redis_password" "$REDIS_PASSWORD"
+        $CAKE Admin setSetting "MISP.baseurl" "$HOSTNAME"
+        $CAKE Admin setSetting "MISP.python_bin" $(which python3)
+        $CAKE Admin setSetting "MISP.tmpdir" "$PATH_TO_MISP/app/tmp"
+        $CAKE Admin setSetting "MISP.attachments_dir" "$PATH_TO_MISP/app/files/attachments"
+        $CAKE Admin setSetting "MISP.attachment_scan_module" "clamav"
+        $CAKE Admin setSetting "MISP.live" true
 
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "SimpleBackgroundJobs.redis_host" "$REDIS_FQDN"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "SimpleBackgroundJobs.redis_password" "$REDIS_PASSWORD"
+        $CAKE Admin setSetting "SimpleBackgroundJobs.redis_host" "$REDIS_FQDN"
+        $CAKE Admin setSetting "SimpleBackgroundJobs.redis_password" "$REDIS_PASSWORD"
 
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.ZeroMQ_redis_host" "$REDIS_FQDN"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.ZeroMQ_redis_password" "$REDIS_PASSWORD"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.ZeroMQ_enable" true
+        $CAKE Admin setSetting "Plugin.ZeroMQ_redis_host" "$REDIS_FQDN"
+        $CAKE Admin setSetting "Plugin.ZeroMQ_redis_password" "$REDIS_PASSWORD"
+        $CAKE Admin setSetting "Plugin.ZeroMQ_enable" true
 
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Enrichment_services_enable" true
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Enrichment_services_url" "http://misp-modules"
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Enrichment_clamav_enabled" true
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Enrichment_clamav_connection" "clamav:3310"
+        $CAKE Admin setSetting "Plugin.Enrichment_services_enable" true
+        $CAKE Admin setSetting "Plugin.Enrichment_services_url" "http://misp-modules"
+        $CAKE Admin setSetting "Plugin.Enrichment_clamav_enabled" true
+        $CAKE Admin setSetting "Plugin.Enrichment_clamav_connection" "clamav:3310"
 
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Import_services_enable" true
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Import_services_url" "http://misp-modules"
+        $CAKE Admin setSetting "Plugin.Import_services_enable" true
+        $CAKE Admin setSetting "Plugin.Import_services_url" "http://misp-modules"
 
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Export_services_enable" true
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Export_services_url" "http://misp-modules"
+        $CAKE Admin setSetting "Plugin.Export_services_enable" true
+        $CAKE Admin setSetting "Plugin.Export_services_url" "http://misp-modules"
 
-        sudo -u www-data /var/www/MISP/app/Console/cake Admin setSetting "Plugin.Cortex_services_enable" false
+        $CAKE Admin setSetting "Plugin.Cortex_services_enable" false
+
+        chmod 640 $PATH_TO_MISP_CONFIG/*
     fi
 }
 
@@ -121,10 +125,54 @@ init_mysql(){
         echo "Database has already been initialized"
     else
         echo "Database has not been initialized, importing MySQL scheme..."
-        $MYSQLCMD < /var/www/MISP/INSTALL/MYSQL.sql
+        $MYSQLCMD < $PATH_TO_MISP/INSTALL/MYSQL.sql
     fi
 }
 
+init_misp_persistent_storage(){
+    for dir_name in cache/feeds cache/ingest cache/models cache/persistent cache/views cached_exports/rpz files logs resque sessions yara
+    do
+        if [ ! -d $PATH_TO_MISP/app/tmp/$dir_name ]
+        then
+            mkdir -p $PATH_TO_MISP/app/tmp/$dir_name
+        fi
+    done
+
+    mkdir -p $PATH_TO_MISP/app/files/attachments $PATH_TO_MISP/app/files/terms
+    [ ! -d $PATH_TO_MISP/app/files/community-metadata ] && cp -r $PATH_TO_MISP/app/files.dist/community-metadata $PATH_TO_MISP/app/files/community-metadata
+    [ ! -d $PATH_TO_MISP/app/files/feed-metadata ] && cp -r $PATH_TO_MISP/app/files.dist/feed-metadata $PATH_TO_MISP/app/files/feed-metadata
+    [ ! -d $PATH_TO_MISP/app/files/misp-decaying-models ] && git clone --depth 1 https://github.com/MISP/misp-decaying-models.git $PATH_TO_MISP/app/files/misp-decaying-models
+    [ ! -d $PATH_TO_MISP/app/files/misp-galaxy ] && git clone --depth 1 https://github.com/MISP/misp-galaxy.git $PATH_TO_MISP/app/files/misp-galaxy
+    [ ! -d $PATH_TO_MISP/app/files/misp-objects ] && git clone --depth 1 https://github.com/MISP/misp-objects.git $PATH_TO_MISP/app/files/misp-objects
+    [ ! -d $PATH_TO_MISP/app/files/noticelists ] && git clone --depth 1 https://github.com/MISP/misp-noticelist.git $PATH_TO_MISP/app/files/noticelists
+    [ ! -d $PATH_TO_MISP/app/files/taxonomies ] && git clone --depth 1 https://github.com/MISP/misp-taxonomies.git $PATH_TO_MISP/app/files/taxonomies
+    [ ! -d $PATH_TO_MISP/app/files/warninglists ] && git clone --depth 1 https://github.com/MISP/misp-warninglists.git $PATH_TO_MISP/app/files/warninglists
+    cd $PATH_TO_MISP
+    git submodule update --recursive
+}
+
+reset_persistent_directories(){
+    rm -rf $PATH_TO_MISP/app/files/scripts $PATH_TO_MISP/app/webroot/*
+    cp -r $PATH_TO_MISP/app/files.dist/scripts $PATH_TO_MISP/app/files/scripts
+    chmod -R g+ws $PATH_TO_MISP/app/files/scripts/tmp/*
+    cp -r $PATH_TO_MISP/app/webroot.dist/* $PATH_TO_MISP/app/webroot
+}
+
+if [ ! -d $PATH_TO_MISP/app/files/attachments ]
+then
+    echo "Configure MISP | Initialize misp persistent storage..." && init_misp_persistent_storage
+fi
+
+if [ "$FPM" != false ]
+then
+    echo "Configure MISP | Reset webroot and files/scripts directories..." && reset_persistent_directories
+fi
+
+if [ ! -d /var/spool/cron/crontabs ]
+then
+    mkdir -p /var/spool/cron/crontabs
+    chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
+fi
 
 if [[ "$INIT" == true ]]
 then

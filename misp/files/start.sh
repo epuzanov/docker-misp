@@ -11,7 +11,7 @@ _term() {
         then
             kill -TERM `cat /var/www/MISP/app/files/scripts/tmp/mispzmq.pid` 2>/dev/null
         fi
-        sudo -u www-data /var/www/MISP/app/Console/worker/stop.sh
+        USER=www-data /var/www/MISP/app/Console/worker/stop.sh
     fi
     if [ "${ppid}" ]
     then
@@ -23,15 +23,17 @@ trap _term SIGTERM
 
 if [ "$CRON" == true ]
 then
+    # Import Cron configuration
+    crontab /etc/cron.d/misp
     cron
 fi
 
 if [ "$FPM" != false ]
 then
-    sudo -u www-data /var/www/MISP/app/Console/worker/start.sh
-    /usr/sbin/php-fpm7.4 -R -F &
+    /var/www/MISP/app/Console/worker/start.sh
+    /usr/sbin/php-fpm7.4 -F &
 else
-    sudo -u www-data touch /var/www/MISP/app/tmp/logs/cron.log
+    touch /var/www/MISP/app/tmp/logs/cron.log
     tail -f /var/www/MISP/app/tmp/logs/cron.log &
 fi
 ppid=$!
