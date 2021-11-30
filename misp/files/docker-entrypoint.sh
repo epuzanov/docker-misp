@@ -3,13 +3,14 @@
 PATH_TO_MISP=/var/www/MISP
 PATH_TO_MISP_CONFIG=$PATH_TO_MISP/app/Config
 CAKE=$PATH_TO_MISP/app/Console/cake
+
+[ -z "$REDIS_FQDN" ] && REDIS_FQDN=redis
+[ -z "$REDIS_PASSWORD" ] && REDIS_PASSWORD=
 [ -z "$MYSQL_HOST" ] && MYSQL_HOST=db
 [ -z "$MYSQL_PORT" ] && MYSQL_PORT=3306
 [ -z "$MYSQL_USER" ] && MYSQL_USER=misp
 [ -z "$MYSQL_PASSWORD" ] && MYSQL_PASSWORD=example
 [ -z "$MYSQL_DATABASE" ] && MYSQL_DATABASE=misp
-[ -z "$REDIS_FQDN" ] && REDIS_FQDN=redis
-[ -z "$REDIS_PASSWORD" ] && REDIS_PASSWORD=
 [ -z "$MYSQLCMD" ] && MYSQLCMD="mysql -u $MYSQL_USER -p$MYSQL_PASSWORD -P $MYSQL_PORT -h $MYSQL_HOST -r -N  $MYSQL_DATABASE"
 
 init_misp_config(){
@@ -138,7 +139,7 @@ init_misp_persistent_storage(){
         fi
     done
 
-    mkdir -p $PATH_TO_MISP/app/files/attachments $PATH_TO_MISP/app/files/terms
+    mkdir -p $PATH_TO_MISP/app/files/attachments $PATH_TO_MISP/app/files/scripts $PATH_TO_MISP/app/files/terms
     [ ! -d $PATH_TO_MISP/app/files/community-metadata ] && cp -r $PATH_TO_MISP/app/files.dist/community-metadata $PATH_TO_MISP/app/files/community-metadata
     [ ! -d $PATH_TO_MISP/app/files/feed-metadata ] && cp -r $PATH_TO_MISP/app/files.dist/feed-metadata $PATH_TO_MISP/app/files/feed-metadata
     [ ! -d $PATH_TO_MISP/app/files/misp-decaying-models ] && git clone --depth 1 https://github.com/MISP/misp-decaying-models.git $PATH_TO_MISP/app/files/misp-decaying-models
@@ -151,11 +152,13 @@ init_misp_persistent_storage(){
     git submodule update --recursive
 }
 
-reset_persistent_directories(){
-    rm -rf $PATH_TO_MISP/app/files/scripts $PATH_TO_MISP/app/webroot/*
-    cp -r $PATH_TO_MISP/app/files.dist/scripts $PATH_TO_MISP/app/files/scripts
-    chmod -R g+ws $PATH_TO_MISP/app/files/scripts/tmp/*
-    cp -r $PATH_TO_MISP/app/webroot.dist/* $PATH_TO_MISP/app/webroot
+sync_persistent_directories(){
+    if [ ! -d $PATH_TO_MISP/app/webroot/img ]
+    then
+        cp -r $PATH_TO_MISP/app/webroot.dist/* $PATH_TO_MISP/app/webroot
+    fi
+    rsync -a --delete $PATH_TO_MISP/app/files.dist/scripts/ $PATH_TO_MISP/app/files/scripts
+    rsync -a --delete --exclude=/files --exclude=/img/orgs --exclude=/img/custom --exclude=/gpg.asc $PATH_TO_MISP/app/webroot.dist/ $PATH_TO_MISP/app/webroot
 }
 
 if [ ! -d $PATH_TO_MISP/app/files/attachments ]
@@ -165,7 +168,7 @@ fi
 
 if [ "$FPM" != false ]
 then
-    echo "Configure MISP | Reset webroot and files/scripts directories..." && reset_persistent_directories
+    echo "Configure MISP | Sync webroot and files/scripts directories..." && sync_persistent_directories
 fi
 
 if [ ! -d /var/spool/cron/crontabs ]

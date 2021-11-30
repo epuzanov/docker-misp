@@ -120,6 +120,7 @@ FROM debian:bullseye-slim as build
         mv Config Config.dist && \
         mv files files.dist && \
         mv webroot webroot.dist && \
+        chmod -R g+ws files.dist/scripts/tmp && \
         mkdir -p Config files webroot && \
         rm -rf files/scripts/tmp Plugin/CakeResque/Config/config.php && \
         ln -s ${PATH_TO_MISP}/app/Config/resque_config.php ${PATH_TO_MISP}/app/Plugin/CakeResque/Config/config.php && \
@@ -234,7 +235,7 @@ FROM debian:bullseye-slim
 
     USER ${WWW_USER}
 
-    VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp"]
+    VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp", "/var/www/MISP/app/webroot"]
 
     EXPOSE 9000
 
