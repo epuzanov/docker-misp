@@ -4,4 +4,4 @@
 10 3 * * * /var/www/MISP/app/Console/cake Admin updateTaxonomies >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
 20 3 * * * /var/www/MISP/app/Console/cake Admin updateWarningLists >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
 30 3 * * * /var/www/MISP/app/Console/cake Admin updateNoticeLists >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
-45 3 * * * /var/www/MISP/app/Console/cake Admin updateObjectTemplates >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log
+45 3 * * * /var/www/MISP/app/Console/cake Admin updateObjectTemplates "1" >>/var/www/MISP/app/tmp/logs/cron.log 2>>/var/www/MISP/app/tmp/logs/cron.log

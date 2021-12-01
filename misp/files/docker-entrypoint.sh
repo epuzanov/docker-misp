@@ -161,6 +161,15 @@ init_misp_persistent_storage(){
     [ ! -d $PATH_TO_MISP/app/files/warninglists ] && git clone --depth 1 https://github.com/MISP/misp-warninglists.git $PATH_TO_MISP/app/files/warninglists
     cd $PATH_TO_MISP
     git submodule update --recursive
+
+}
+
+update_GOWNT() {
+    $CAKE Admin updateGalaxies
+    $CAKE Admin updateTaxonomies
+    $CAKE Admin updateWarningLists
+    $CAKE Admin updateNoticeLists
+    $CAKE Admin updateObjectTemplates "1"
 }
 
 sync_persistent_directories(){
@@ -219,6 +228,7 @@ if [[ "$INIT" == true ]]
 then
     echo "Setup MySQL..." && init_mysql
     echo "Configure MISP | Initialize misp base config..." && init_misp_config
+    echo "Configure MISP | Updating Galaxies, ObjectTemplates, Warninglists, Noticelists and Templates" && update_GOWNT
 fi
 
 exec "$@"
