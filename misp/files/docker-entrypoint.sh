@@ -203,14 +203,18 @@ setup_gnupg() {
     fi
 }
 
-
-if [ ! -d $PATH_TO_MISP/app/files/attachments ]
-then
-    echo "Configure MISP | Initialize misp persistent storage..." && init_misp_persistent_storage
-fi
-
 if [ "$FPM" != false ]
 then
+    if [ ! -f $PATH_TO_MISP_CONFIG/config.php ]
+    then
+        echo "Setup MySQL..." && init_mysql
+        if [ ! -d $PATH_TO_MISP/app/files/attachments ]
+        then
+            echo "Configure MISP | Initialize misp persistent storage..." && init_misp_persistent_storage
+        fi
+        echo "Configure MISP | Initialize misp base config..." && init_misp_config
+        echo "Configure MISP | Updating Galaxies, ObjectTemplates, Warninglists, Noticelists and Templates..." && update_GOWNT
+    fi
     echo "Configure MISP | Sync webroot and files/scripts directories..." && sync_persistent_directories
     if [ ! -d $PATH_TO_MISP_CONFIG/.gnupg ]
     then
@@ -218,17 +222,10 @@ then
     fi
 fi
 
-if [ ! -d /var/spool/cron/crontabs ]
+if [ "$CRON" != false ] && [ ! -d /var/spool/cron/crontabs ]
 then
     mkdir -p /var/spool/cron/crontabs
     chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
-fi
-
-if [[ "$INIT" == true ]]
-then
-    echo "Setup MySQL..." && init_mysql
-    echo "Configure MISP | Initialize misp base config..." && init_misp_config
-    echo "Configure MISP | Updating Galaxies, ObjectTemplates, Warninglists, Noticelists and Templates" && update_GOWNT
 fi
 
 exec "$@"
