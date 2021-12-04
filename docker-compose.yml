@@ -81,7 +81,6 @@ services:
       - misp_conf:/var/www/MISP/app/Config
       - misp_files:/var/www/MISP/app/files
       - misp_tmp:/var/www/MISP/app/tmp
-      - misp_webroot:/var/www/MISP/app/webroot
     environment:
       - "MISP_BASEURL=https://localhost"
       - "REDIS_FQDN=redis"
@@ -141,5 +140,4 @@ volumes:
 #    misp_cron:
     misp_files:
     misp_tmp:
-    misp_webroot:
     misp_certs:

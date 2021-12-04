@@ -116,15 +116,19 @@ FROM debian:bullseye-slim as build
     RUN cd ${PATH_TO_MISP}/app && \
         php composer.phar install --no-dev
 
-    RUN cd ${PATH_TO_MISP}/app && \
-        mv Config Config.dist && \
-        mv files files.dist && \
-        mv webroot webroot.dist && \
-        chmod -R g+ws files.dist/scripts/tmp && \
-        mkdir -p Config files webroot && \
-        rm -rf files/scripts/tmp Plugin/CakeResque/Config/config.php && \
+    RUN cd ${PATH_TO_MISP} && \
+        mkdir save && \
+        mv app/Config save/Config && \
+        mv app/files save/files && \
+        mv app/webroot/img/orgs save/orgs && \
+        chmod -R g+ws save/files/scripts/tmp && \
+        mkdir -p app/Config app/files && \
+        rm -rf app/webroot/files app/webroot/img/custom app/Plugin/CakeResque/Config/config.php app/tmp/* && \
         ln -s ${PATH_TO_MISP}/app/Config/resque_config.php ${PATH_TO_MISP}/app/Plugin/CakeResque/Config/config.php && \
-        rm -rf tmp/*
+        ln -s ${PATH_TO_MISP}/app/files/webroot/files ${PATH_TO_MISP}/app/webroot/files && \
+        ln -s ${PATH_TO_MISP}/app/files/webroot/img/custom ${PATH_TO_MISP}/app/webroot/img/custom && \
+        ln -s ${PATH_TO_MISP}/app/files/webroot/img/orgs ${PATH_TO_MISP}/app/webroot/img/orgs && \
+        ln -s ${PATH_TO_MISP}/app/files/webroot/gpg.asc ${PATH_TO_MISP}/app/webroot/gpg.asc
 
 FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
@@ -224,9 +228,7 @@ FROM debian:bullseye-slim
         chmod u+s /usr/sbin/php-fpm7.4
 
     # Copy files
-    COPY files/start.sh /
-    COPY files/docker-entrypoint.sh /
-    COPY files/etc /etc
+    COPY files/ /
 
     # Change Work directory
     WORKDIR ${PATH_TO_MISP}
@@ -235,7 +237,7 @@ FROM debian:bullseye-slim
 
     USER ${WWW_USER}
 
-    VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp", "/var/www/MISP/app/webroot"]
+    VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp"]
 
     EXPOSE 9000
 

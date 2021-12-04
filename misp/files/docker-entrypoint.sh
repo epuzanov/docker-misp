@@ -18,18 +18,18 @@ CAKE=${PATH_TO_MISP}/app/Console/cake
 [ -z "${MYSQL_DATABASE}" ] && MYSQL_DATABASE=misp
 [ -z "${MYSQLCMD}" ] && MYSQLCMD="mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -P ${MYSQL_PORT} -h ${MYSQL_HOST} -r -N ${MYSQL_DATABASE}"
 
-init_misp_config(){
+init_misp_config() {
     if [ ! -f ${PATH_TO_MISP_CONFIG}/routes.php ]
     then
-        cp ${PATH_TO_MISP_CONFIG}.dist/routes.php ${PATH_TO_MISP_CONFIG}/routes.php
+        cp ${PATH_TO_MISP}/save/Config/routes.php ${PATH_TO_MISP_CONFIG}/routes.php
     fi
     if [ ! -f ${PATH_TO_MISP_CONFIG}/bootstrap.php ]
     then
-        cp ${PATH_TO_MISP_CONFIG}.dist/bootstrap.default.php ${PATH_TO_MISP_CONFIG}/bootstrap.php
+        cp ${PATH_TO_MISP}/save/Config/bootstrap.default.php ${PATH_TO_MISP_CONFIG}/bootstrap.php
     fi
     if [ ! -f ${PATH_TO_MISP_CONFIG}/core.php ]
     then
-        cp ${PATH_TO_MISP_CONFIG}.dist/core.default.php ${PATH_TO_MISP_CONFIG}/core.php
+        cp ${PATH_TO_MISP}/save/Config/core.default.php ${PATH_TO_MISP_CONFIG}/core.php
         sed -i "s/'php',/'cake',/" ${PATH_TO_MISP_CONFIG}/core.php
     fi
     if [ ! -f ${PATH_TO_MISP_CONFIG}/resque_config.php ]
@@ -45,7 +45,7 @@ init_misp_config(){
     if [ ! -f ${PATH_TO_MISP_CONFIG}/database.php ]
     then
         echo "Configure MISP | Set DB User, Password and Host in database.php"
-        cp ${PATH_TO_MISP_CONFIG}.dist/database.default.php ${PATH_TO_MISP_CONFIG}/database.php
+        cp ${PATH_TO_MISP}/save/Config/database.default.php ${PATH_TO_MISP_CONFIG}/database.php
         sed -i "s/localhost/${MYSQL_HOST}/" ${PATH_TO_MISP_CONFIG}/database.php
         sed -i "s/db\s*login/${MYSQL_USER}/" ${PATH_TO_MISP_CONFIG}/database.php
         sed -i "s/db\s*password/${MYSQL_PASSWORD}/" ${PATH_TO_MISP_CONFIG}/database.php
@@ -53,7 +53,7 @@ init_misp_config(){
     fi
     if [ ! -f ${PATH_TO_MISP_CONFIG}/email.php ]
     then
-        cp ${PATH_TO_MISP_CONFIG}.dist/email.php ${PATH_TO_MISP_CONFIG}/email.php
+        cp ${PATH_TO_MISP}/save/Config/email.php ${PATH_TO_MISP_CONFIG}/email.php
         sed -i -E "/\s+public .smtp = array./,/\s+public .fast = array./{;/\s+public .fast = array./!{;H;b;};x;p;x;}" ${PATH_TO_MISP_CONFIG}/email.php
         sed -i -E "/\s+'transport'\s+=>\s+'Mail'/,/\s+public .smtp = array./d" ${PATH_TO_MISP_CONFIG}/email.php
         sed -i "s/'localhost'/'mail'/" ${PATH_TO_MISP_CONFIG}/email.php
@@ -64,12 +64,12 @@ init_misp_config(){
     fi
     if [ ! -f ${PATH_TO_MISP_CONFIG}/config.php ]
     then
-        cp ${PATH_TO_MISP_CONFIG}.dist/config.default.php ${PATH_TO_MISP_CONFIG}/config.php
+        cp ${PATH_TO_MISP}/save/Config/config.default.php ${PATH_TO_MISP_CONFIG}/config.php
         chmod 640 ${PATH_TO_MISP_CONFIG}/*
     fi
 }
 
-init_mysql(){
+init_mysql() {
     # Test when MySQL is ready....
     # wait for Database come ready
     isDBup () {
@@ -105,7 +105,7 @@ init_mysql(){
     fi
 }
 
-init_misp_persistent_storage(){
+init_misp_persistent_storage() {
     for dir_name in cache/feeds cache/ingest cache/models cache/persistent cache/views cached_exports/rpz files logs resque sessions yara
     do
         if [ ! -d ${PATH_TO_MISP}/app/tmp/${dir_name} ]
@@ -114,9 +114,9 @@ init_misp_persistent_storage(){
         fi
     done
 
-    mkdir -p ${PATH_TO_MISP}/app/files/attachments ${PATH_TO_MISP}/app/files/scripts ${PATH_TO_MISP}/app/files/terms
-    [ ! -d ${PATH_TO_MISP}/app/files/community-metadata ] && cp -r ${PATH_TO_MISP}/app/files.dist/community-metadata ${PATH_TO_MISP}/app/files/community-metadata
-    [ ! -d ${PATH_TO_MISP}/app/files/feed-metadata ] && cp -r ${PATH_TO_MISP}/app/files.dist/feed-metadata ${PATH_TO_MISP}/app/files/feed-metadata
+    mkdir -p ${PATH_TO_MISP}/app/files/attachments ${PATH_TO_MISP}/app/files/scripts/tmp ${PATH_TO_MISP}/app/files/terms ${PATH_TO_MISP}/app/files/webroot/files ${PATH_TO_MISP}/app/files/webroot/img/custom ${PATH_TO_MISP}/app/files/webroot/img/orgs
+    [ ! -d ${PATH_TO_MISP}/app/files/community-metadata ] && cp -r ${PATH_TO_MISP}/save/files/community-metadata ${PATH_TO_MISP}/app/files/community-metadata
+    [ ! -d ${PATH_TO_MISP}/app/files/feed-metadata ] && cp -r ${PATH_TO_MISP}/save/files/feed-metadata ${PATH_TO_MISP}/app/files/feed-metadata
     [ ! -d ${PATH_TO_MISP}/app/files/misp-decaying-models ] && git clone --depth 1 https://github.com/MISP/misp-decaying-models.git ${PATH_TO_MISP}/app/files/misp-decaying-models
     [ ! -d ${PATH_TO_MISP}/app/files/misp-galaxy ] && git clone --depth 1 https://github.com/MISP/misp-galaxy.git ${PATH_TO_MISP}/app/files/misp-galaxy
     [ ! -d ${PATH_TO_MISP}/app/files/misp-objects ] && git clone --depth 1 https://github.com/MISP/misp-objects.git ${PATH_TO_MISP}/app/files/misp-objects
@@ -135,13 +135,9 @@ update_GOWNT() {
     ${CAKE} Admin updateObjectTemplates "1"
 }
 
-sync_persistent_directories(){
-    if [ ! -d ${PATH_TO_MISP}/app/webroot/img ]
-    then
-        cp -r ${PATH_TO_MISP}/app/webroot.dist/* ${PATH_TO_MISP}/app/webroot
-    fi
-    rsync -a --delete ${PATH_TO_MISP}/app/files.dist/scripts/ ${PATH_TO_MISP}/app/files/scripts
-    rsync -a --delete --exclude=/files --exclude=/img/orgs --exclude=/img/custom --exclude=/gpg.asc ${PATH_TO_MISP}/app/webroot.dist/ ${PATH_TO_MISP}/app/webroot
+sync_persistent_directories() {
+    rsync -a --delete --exclude=/tmp ${PATH_TO_MISP}/save/files/scripts/ ${PATH_TO_MISP}/app/files/scripts
+    rsync -a ${PATH_TO_MISP}/save/orgs/ ${PATH_TO_MISP}/app/webroot/img/orgs
 }
 
 setup_gnupg() {
@@ -160,9 +156,9 @@ setup_gnupg() {
     ${GPG_BINARY} --homedir ${PATH_TO_MISP_CONFIG}/.gnupg --batch --gen-key /tmp/gen-key-script
     rm -rf /tmp/gen-key-script
 
-    if [ ! -f ${PATH_TO_MISP}/app/webroot/gpg.asc ]
+    if [ ! -f ${PATH_TO_MISP}/app/files/webroot/gpg.asc ]
     then
-        ${GPG_BINARY} --homedir ${PATH_TO_MISP_CONFIG}/.gnupg --export --armor ${GPG_EMAIL_ADDRESS} > ${PATH_TO_MISP}/app/webroot/gpg.asc
+        ${GPG_BINARY} --homedir ${PATH_TO_MISP_CONFIG}/.gnupg --export --armor ${GPG_EMAIL_ADDRESS} > ${PATH_TO_MISP}/app/files/webroot/gpg.asc
     fi
 }
 
