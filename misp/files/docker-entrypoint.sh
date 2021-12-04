@@ -203,41 +203,6 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "Plugin.Enrichment_hover_popover_only" false
     ${CAKE} Admin setSetting "Plugin.Enrichment_hover_timeout" 150
     ${CAKE} Admin setSetting "Plugin.Enrichment_timeout" 300
-    ${CAKE} Admin setSetting "Plugin.Enrichment_bgpranking_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_countrycode_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_cve_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_cve_advanced_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_cpe_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_dns_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_eql_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_btc_steroids_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_ipasn_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_reversedns_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_yara_syntax_validator_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_yara_query_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_wiki_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_threatminer_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_threatcrowd_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_hashdd_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_rbl_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_sigma_syntax_validator_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_stix2_pattern_syntax_validator_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_sigma_queries_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_dbl_spamhaus_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_btc_scam_check_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_macvendors_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_qrcode_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_ocr_enrich_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_pdf_enrich_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_docx_enrich_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_xlsx_enrich_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_pptx_enrich_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_ods_enrich_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_odt_enrich_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_urlhaus_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_malwarebazaar_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_html_to_markdown_enabled" true
-    ${CAKE} Admin setSetting "Plugin.Enrichment_socialscan_enabled" true
     ${CAKE} Admin setSetting "Plugin.Enrichment_services_url" "http://misp-modules"
     ${CAKE} Admin setSetting "Plugin.Enrichment_services_port" 6666
     ${CAKE} Admin setSetting "Plugin.Enrichment_clamav_enabled" true
@@ -323,7 +288,7 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "Plugin.Kafka_audit_notifications_topic" "misp_audit"
 
     # ZeroMQ settings
-    ${CAKE} Admin setSetting "Plugin.ZeroMQ_host" "misp"
+    ${CAKE} Admin setSetting "Plugin.ZeroMQ_host" "127.0.0.1"
     ${CAKE} Admin setSetting "Plugin.ZeroMQ_port" 50000
     ${CAKE} Admin setSetting "Plugin.ZeroMQ_redis_host" "${REDIS_FQDN}"
     ${CAKE} Admin setSetting "Plugin.ZeroMQ_redis_password" "${REDIS_PASSWORD}"
