@@ -21,14 +21,14 @@ _term() {
 
 trap _term SIGTERM
 
-if [ "$CRON" == true ]
+if [ "${CRON}" == true ]
 then
     # Import Cron configuration
     crontab /etc/cron.d/misp
     cron
 fi
 
-if [ "$FPM" != false ]
+if [ "${FPM}" != false ]
 then
     /var/www/MISP/app/Console/worker/start.sh
     /usr/sbin/php-fpm7.4 -F &
