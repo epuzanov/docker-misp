@@ -14,7 +14,7 @@ CAKE=${PATH_TO_MISP}/app/Console/cake
 [ -z "${MYSQL_HOST}" ] && MYSQL_HOST=db
 [ -z "${MYSQL_PORT}" ] && MYSQL_PORT=3306
 [ -z "${MYSQL_USER}" ] && MYSQL_USER=misp
-[ -z "${MYSQL_PASSWORD}" ] && MYSQL_PASSWORD=example
+[ -z "${MYSQL_PASSWORD}" ] && MYSQL_PASSWORD=The_minimum_password_length_is_17_characters
 [ -z "${MYSQL_DATABASE}" ] && MYSQL_DATABASE=misp
 [ -z "${MYSQLCMD}" ] && MYSQLCMD="mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -P ${MYSQL_PORT} -h ${MYSQL_HOST} -r -N ${MYSQL_DATABASE}"
 
