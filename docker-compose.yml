@@ -51,7 +51,7 @@ services:
     environment:
       - "REDIS_BACKEND=redis"
       - "REDIS_PW=The_minimum_password_length_is_32_characters"
-      - "REDIS_DATABASE=245"
+      - "REDIS_DATABASE=0"
     depends_on:
       - redis
       - db

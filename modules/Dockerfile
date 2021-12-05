@@ -3,43 +3,44 @@ ENV DEBIAN_FRONTEND noninteractive
 ARG MODULES_TAG=v2.4.151
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-            curl \
-            imagemagick \
-            libcaca0 \
-            libcjson1 \
-            libfuzzy2 \
-            libglib2.0-0 \
-            libjpeg62-turbo \
-            liblua5.3-0 \
-            libpq5 \
-            libpoppler-cpp0v5 \
-            libxext6 \
-            libxrender1 \
-            libzbar0 \
-            python3 \
-            tesseract-ocr \
-            zbar-tools \
-        && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+        curl \
+        imagemagick \
+        libcaca0 \
+        libcjson1 \
+        libfuzzy2 \
+        libgl1 \
+        libglib2.0-0 \
+        libjpeg62-turbo \
+        liblua5.3-0 \
+        libpq5 \
+        libpoppler-cpp0v5 \
+        libxext6 \
+        libxrender1 \
+        libzbar0 \
+        python3 \
+        python3-distutils \
+        python3-dnspython \
+        tesseract-ocr \
+        zbar-tools \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-            build-essential \
-            cmake \
-            git \
-            libcaca-dev \
-            libcjson-dev \
-            libfuzzy-dev \
-            libjpeg-dev \
-            liblua5.3-dev \
-            libpoppler-cpp-dev \
-            libzbar-dev \
-            pkg-config \
-            python3-dev \
-            python3-pip \
-            python3-wheel \
-        && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+        build-essential \
+        cmake \
+        git \
+        libcaca-dev \
+        libcjson-dev \
+        libfuzzy-dev \
+        libjpeg-dev \
+        liblua5.3-dev \
+        libpoppler-cpp-dev \
+        libzbar-dev \
+        pkg-config \
+        python3-dev \
+        python3-pip \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Build MISP and Install Modules
-    RUN mkdir /wheel
     WORKDIR /srv
 
     RUN git clone --depth 1 https://github.com/stricaud/gtcaca.git /srv/gtcaca; \
@@ -49,11 +50,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         mkdir -p /srv/faup/build; cd /srv/faup/build || exit; cmake .. && make install; \
         cd /srv/faup/src/lib/bindings/python || exit; pip3 install . --no-cache-dir
 
+    RUN pip3 install pyeti-python3 pyipasnhistory \
+        git+https://github.com/censys/censys-python.git@60c4101bee0e7cf5ea1a9a9f87f347aff3a2de65#egg=censys \
+        git+https://github.com/D4-project/BGP-Ranking.git@68de39f6c5196f796055c1ac34504054d688aa59#egg=pybgpranking\&subdirectory=client \
+        git+https://github.com/MISP/PyIntel471.git#egg=pyintel471 \
+        git+https://github.com/cartertemm/ODTReader.git@49d6938693f6faa3ff09998f86dba551ae3a996b#egg=odtreader \
+        git+https://github.com/sebdraven/pydnstrails@48c1f740025c51289f43a24863d1845ff12fd21a#egg=pydnstrails \
+        git+https://github.com/sebdraven/pyonyphe@1ce15581beebb13e841193a08a2eb6f967855fcb#egg=pyonyphe \
+        git+https://github.com/abenassi/Google-Search-API.git \
+        git+https://github.com/SteveClement/trustar-python.git
+
     RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /srv/misp-modules; \
         cd /srv/misp-modules || exit; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
         pip3 install . --no-cache-dir
 
     RUN ldconfig; \
+        sed -i "s/db=db/db=db, password=password/g" /usr/local/lib/python3.9/dist-packages/misp_modules/helpers/cache.py; \
+        sed -i "s/else 0/else 0\npassword = os.getenv\(\"REDIS_PW\"\)/g" /usr/local/lib/python3.9/dist-packages/misp_modules/helpers/cache.py; \
         python3 -m compileall /usr/local/lib/python3.9 || :
 
 FROM debian:bullseye-slim
@@ -61,23 +74,26 @@ ENV DEBIAN_FRONTEND noninteractive
 ARG MODULES_TAG=v2.4.151
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-            curl \
-            imagemagick \
-            libcaca0 \
-            libcjson1 \
-            libfuzzy2 \
-            libglib2.0-0 \
-            libjpeg62-turbo \
-            liblua5.3-0 \
-            libpq5 \
-            libpoppler-cpp0v5 \
-            libxext6 \
-            libxrender1 \
-            libzbar0 \
-            python3 \
-            tesseract-ocr \
-            zbar-tools \
-        && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+        curl \
+        imagemagick \
+        libcaca0 \
+        libcjson1 \
+        libfuzzy2 \
+        libgl1 \
+        libglib2.0-0 \
+        libjpeg62-turbo \
+        liblua5.3-0 \
+        libpq5 \
+        libpoppler-cpp0v5 \
+        libxext6 \
+        libxrender1 \
+        libzbar0 \
+        python3 \
+        python3-distutils \
+        python3-dnspython \
+        tesseract-ocr \
+        zbar-tools \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/ /usr/local/
 
