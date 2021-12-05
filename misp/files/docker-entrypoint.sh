@@ -123,8 +123,7 @@ init_misp_persistent_storage() {
     [ ! -d ${PATH_TO_MISP}/app/files/noticelists ] && git clone --depth 1 https://github.com/MISP/misp-noticelist.git ${PATH_TO_MISP}/app/files/noticelists
     [ ! -d ${PATH_TO_MISP}/app/files/taxonomies ] && git clone --depth 1 https://github.com/MISP/misp-taxonomies.git ${PATH_TO_MISP}/app/files/taxonomies
     [ ! -d ${PATH_TO_MISP}/app/files/warninglists ] && git clone --depth 1 https://github.com/MISP/misp-warninglists.git ${PATH_TO_MISP}/app/files/warninglists
-    cd ${PATH_TO_MISP}
-    git submodule update --recursive
+    git -C ${PATH_TO_MISP} submodule update --recursive
 }
 
 update_GOWNT() {
