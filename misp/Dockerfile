@@ -222,6 +222,7 @@ FROM debian:bullseye-slim
 
     # Prepare directories and files
     RUN rm -f /etc/cron.d/.placeholder /etc/cron.d/* && \
+        ln -s /var/www/MISP/app/Config/.gnupg /var/www/.gnupg && \
         chmod 777 /run && \
         chmod 777 /var/spool/cron && \
         chmod u+s /usr/sbin/cron && \
