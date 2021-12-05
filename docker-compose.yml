@@ -26,12 +26,9 @@ services:
       - /var/log/clamav
 
   db:
-    image: mysql:latest
-    command: --default-authentication-plugin=mysql_native_password
+    image: mariadb:latest
     restart: always
     read_only: true
-    cap_add:
-      - SYS_NICE
     environment:
       - "MYSQL_USER=misp"
       - "MYSQL_PASSWORD=The_minimum_password_length_is_17_characters"
