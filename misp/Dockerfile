@@ -114,7 +114,7 @@ FROM debian:bullseye-slim as build
 
     # Install composer plugins and vendors
     RUN cd ${PATH_TO_MISP}/app && \
-        php composer.phar install --no-dev
+        php composer.phar install
 
     RUN cd ${PATH_TO_MISP} && \
         mkdir save && \
