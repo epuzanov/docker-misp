@@ -104,7 +104,7 @@ FROM debian:bullseye-slim as build
         for dir_name in mixbox python-cybox python-maec python-stix cti-python-stix2 misp-stix ; do cd $dir_name && python3 setup.py install && cd .. && rm -rf $dir_name && git submodule deinit --force $dir_name && git rm $dir_name ; done && \
         pip3 install ${PATH_TO_MISP}/PyMISP && \
         cd ${PATH_TO_MISP} && \
-        for dir_name in PyMISP app/Lib/cakephp app/Lib/random_compat app/files/scripts/misp-opendata misp-vagrant ; do mv $dir_name $dir_name\_tmp && git submodule deinit --force $dir_name && git rm $dir_name && mv $dir_name\_tmp $dir_name ; done && \
+        for dir_name in PyMISP app/Lib/cakephp app/files/scripts/misp-opendata misp-vagrant ; do mv $dir_name $dir_name\_tmp && git submodule deinit --force $dir_name && git rm $dir_name && mv $dir_name\_tmp $dir_name ; done && \
         for dir_name in misp-decaying-models misp-galaxy misp-objects noticelists taxonomies warninglists ; do rm -rf ${PATH_TO_MISP}/app/files/$dir_name ${PATH_TO_MISP}/.git/modules/app/files/$dir_name && mkdir ${PATH_TO_MISP}/app/files/$dir_name && ln -s ../../../../app/files/$dir_name/.git ${PATH_TO_MISP}/.git/modules/app/files/$dir_name ; done && \
         rm -rf ${PATH_TO_MISP}/.git/modules/cti-python-stix2 ${PATH_TO_MISP}/.git/modules/PyMISP ${PATH_TO_MISP}/.git/modules/app/Lib ${PATH_TO_MISP}/.git/modules/app/files/scripts ${PATH_TO_MISP}/PyMISP/pymisp /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
         ln -s ${PATH_TO_MISP}/app/files/misp-objects /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
