@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim as builder
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.153
+ARG MODULES_TAG=v2.4.156
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
@@ -50,18 +50,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         mkdir -p /srv/faup/build; cd /srv/faup/build || exit; cmake .. && make install; \
         cd /srv/faup/src/lib/bindings/python || exit; pip3 install . --no-cache-dir
 
-    RUN pip3 install pyeti-python3 pyipasnhistory \
-        git+https://github.com/censys/censys-python.git@60c4101bee0e7cf5ea1a9a9f87f347aff3a2de65#egg=censys \
-        git+https://github.com/D4-project/BGP-Ranking.git@68de39f6c5196f796055c1ac34504054d688aa59#egg=pybgpranking\&subdirectory=client \
-        git+https://github.com/MISP/PyIntel471.git#egg=pyintel471 \
-        git+https://github.com/cartertemm/ODTReader.git@49d6938693f6faa3ff09998f86dba551ae3a996b#egg=odtreader \
-        git+https://github.com/sebdraven/pydnstrails@48c1f740025c51289f43a24863d1845ff12fd21a#egg=pydnstrails \
-        git+https://github.com/sebdraven/pyonyphe@1ce15581beebb13e841193a08a2eb6f967855fcb#egg=pyonyphe \
-        git+https://github.com/abenassi/Google-Search-API.git \
-        git+https://github.com/SteveClement/trustar-python.git
-
     RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /srv/misp-modules; \
-        cd /srv/misp-modules || exit; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
+        cd /srv/misp-modules || exit; pip3 install pyeti-python3; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
         pip3 install . --no-cache-dir
 
     RUN ldconfig; \
@@ -71,7 +61,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 FROM debian:bullseye-slim
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.153
+ARG MODULES_TAG=v2.4.156
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
