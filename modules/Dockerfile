@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim as builder
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.159
+ARG MODULES_TAG=v2.4.165
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
@@ -61,7 +61,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 FROM debian:bullseye-slim
 ENV DEBIAN_FRONTEND noninteractive
-ARG MODULES_TAG=v2.4.159
+ARG MODULES_TAG=v2.4.165
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
