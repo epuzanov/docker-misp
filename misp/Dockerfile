@@ -14,6 +14,7 @@ FROM debian:bullseye-slim as build
         libbrotli1 \
         libfuzzy2 \
         librdkafka1 \
+        libsimdjson5 \
         mariadb-client-core-10.5 \
         openssl \
         php \
@@ -57,10 +58,12 @@ FROM debian:bullseye-slim as build
     # Dev Packages
     RUN apt-get update; apt-get install -y --no-install-recommends \
         ca-certificates \
+        g++ \
         gcc \
         libbrotli-dev \
         libfuzzy-dev \
         librdkafka-dev \
+        libsimdjson-dev \
         make \
         php-curl \
         php-dev \
@@ -87,6 +90,9 @@ FROM debian:bullseye-slim as build
 
     # build rdkafka
     RUN cp /usr/lib/x86_64-linux-gnu/librdkafka.* /usr/lib && pecl install rdkafka
+    
+    # build simdjson
+    RUN cp /usr/lib/x86_64-linux-gnu/libsimdjson.* /usr/lib && pecl install simdjson
 
     # Download MISP code
     RUN git clone --depth 1 --branch ${MISP_TAG} https://github.com/MISP/MISP.git ${PATH_TO_MISP} && \
@@ -146,6 +152,7 @@ FROM debian:bullseye-slim
         libbrotli1 \
         libfuzzy2 \
         librdkafka1 \
+        libsimdjson5 \
         mariadb-client-core-10.5 \
         openssl \
         php \
@@ -207,14 +214,17 @@ FROM debian:bullseye-slim
     # PHP Modules
     COPY --from=build /usr/lib/php/${PHP_API}/brotli.so /usr/lib/php/${PHP_API}/brotli.so
     COPY --from=build /usr/lib/php/${PHP_API}/rdkafka.so /usr/lib/php/${PHP_API}/rdkafka.so
+    COPY --from=build /usr/lib/php/${PHP_API}/simdjson.so /usr/lib/php/${PHP_API}/simdjson.so
     COPY --from=build /usr/lib/php/${PHP_API}/ssdeep.so /usr/lib/php/${PHP_API}/ssdeep.so
     RUN echo "extension=rdkafka.so" > "/etc/php/${PHP_VER}/mods-available/rdkafka.ini" && \
+        echo "extension=simdjson.so" > "/etc/php/${PHP_VER}/mods-available/simdjson.ini" && \
         echo "extension=ssdeep.so" > "/etc/php/${PHP_VER}/mods-available/ssdeep.ini" && \
         echo "extension=brotli.so" > "/etc/php/${PHP_VER}/mods-available/brotli.ini" && \
         phpenmod gnupg && \
         phpenmod redis && \
         phpenmod brotli && \
         phpenmod rdkafka && \
+        phpenmod simdjson && \
         phpenmod ssdeep
 
     # Copy MISP Files
