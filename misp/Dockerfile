@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.167
+    ARG MISP_TAG=v2.4.169
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
@@ -102,6 +102,7 @@ FROM debian:bullseye-slim as build
         git -C ${PATH_TO_MISP} config core.filemode false && \
         git -C ${PATH_TO_MISP} reflog expire --expire=now --all && \
         git -C ${PATH_TO_MISP} gc --prune=now --aggressive && \
+        git config --global --add safe.directory ${PATH_TO_MISP} && \
         install -d -o ${WWW_USER} -g ${WWW_USER} -m 0755 /var/www/.composer && \
         chown -R ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}
 
@@ -138,7 +139,7 @@ FROM debian:bullseye-slim as build
 
 FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.167
+    ARG MISP_TAG=v2.4.169
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
