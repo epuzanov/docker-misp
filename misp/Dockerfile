@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.169
+    ARG MISP_TAG=v2.4.174
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
@@ -137,9 +137,13 @@ FROM debian:bullseye-slim as build
         ln -s ${PATH_TO_MISP}/app/files/webroot/img/orgs ${PATH_TO_MISP}/app/webroot/img/orgs && \
         ln -s ${PATH_TO_MISP}/app/files/webroot/gpg.asc ${PATH_TO_MISP}/app/webroot/gpg.asc
 
+    RUN cd ${PATH_TO_MISP}/app && \
+        chmod 0755 composer.phar && \
+        ./composer.phar update
+
 FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.169
+    ARG MISP_TAG=v2.4.174
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
