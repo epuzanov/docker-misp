@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.174
+    ARG MISP_TAG=v2.4.177
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
@@ -143,7 +143,7 @@ FROM debian:bullseye-slim as build
 
 FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.174
+    ARG MISP_TAG=v2.4.177
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
