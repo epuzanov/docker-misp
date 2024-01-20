@@ -402,6 +402,14 @@ then
     then
         echo "Configure MISP | Generate GnuPG key..." && setup_gnupg
     fi
+    for dir_name in `ls -1 ${PATH_TO_MISP}/save/files`
+    do
+        if [ ! -d ${PATH_TO_MISP}/save/files/${dir_name} ]
+        then
+            cp -r ${PATH_TO_MISP}/save/files/${dir_name} ${PATH_TO_MISP}/app/files/${dir_name}
+        fi
+    done
+    git -C ${PATH_TO_MISP} submodule update --progress --recursive app
 fi
 
 if [ "${CRON}" != false ] && [ ! -d /var/spool/cron/crontabs ]

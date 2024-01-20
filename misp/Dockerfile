@@ -1,6 +1,6 @@
 FROM debian:bullseye-slim as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.177
+    ARG MISP_TAG=v2.4.183
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
@@ -111,7 +111,7 @@ FROM debian:bullseye-slim as build
         cd ${PATH_TO_MISP}/app/files/scripts && \
         for dir_name in mixbox python-cybox python-maec python-stix cti-python-stix2 misp-stix ; do cd $dir_name && python3 setup.py install && cd .. && rm -rf $dir_name && git submodule deinit --force $dir_name && git rm $dir_name ; done && \
         cd ${PATH_TO_MISP} && \
-        for dir_name in PyMISP app/Lib/cakephp app/files/scripts/misp-opendata misp-vagrant ; do mv $dir_name $dir_name\_tmp && git submodule deinit --force $dir_name && git rm $dir_name && mv $dir_name\_tmp $dir_name ; done && \
+        for dir_name in PyMISP app/Lib/cakephp app/files/scripts/misp-opendata ; do mv $dir_name $dir_name\_tmp && git submodule deinit --force $dir_name && git rm $dir_name && mv $dir_name\_tmp $dir_name ; done && \
         for dir_name in misp-decaying-models misp-galaxy misp-objects misp-workflow-blueprints noticelists taxonomies warninglists ; do rm -rf ${PATH_TO_MISP}/app/files/$dir_name ${PATH_TO_MISP}/.git/modules/app/files/$dir_name && mkdir ${PATH_TO_MISP}/app/files/$dir_name && ln -s ../../../../app/files/$dir_name/.git ${PATH_TO_MISP}/.git/modules/app/files/$dir_name ; done && \
         rm -rf ${PATH_TO_MISP}/.git/modules/cti-python-stix2 ${PATH_TO_MISP}/.git/modules/PyMISP ${PATH_TO_MISP}/.git/modules/app/Lib ${PATH_TO_MISP}/.git/modules/app/files/scripts ${PATH_TO_MISP}/PyMISP/pymisp /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
         ln -s ${PATH_TO_MISP}/app/files/misp-objects /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
@@ -143,7 +143,7 @@ FROM debian:bullseye-slim as build
 
 FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.177
+    ARG MISP_TAG=v2.4.183
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
