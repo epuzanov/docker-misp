@@ -416,8 +416,8 @@ trap _term SIGTERM
 if [ "${CRON}" == true ]
 then
     # Import Cron configuration
-    crontab /etc/cron.d/misp
-    cron
+    sudo -u ${WWW_USER} crontab /etc/cron.d/misp
+    sudo -u ${WWW_USER} cron
 fi
 
 if [ "${CRON}" != false ] && [ ! -d /var/spool/cron/crontabs ]
