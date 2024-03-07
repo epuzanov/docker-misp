@@ -60,7 +60,8 @@ services:
       - /tmp
 
   misp:
-    image: epuzanov/misp-fpm:latest
+    image: epuzanov/misp:latest
+    command: start.sh
     restart: always
     read_only: true
     build:
@@ -93,7 +94,8 @@ services:
 #      - "MYSQL_DATABASE=misp"
 
   cron:
-    image: epuzanov/misp-fpm:latest
+    image: epuzanov/misp:latest
+    command: start.sh
     restart: always
     read_only: true
     depends_on:
@@ -112,11 +114,9 @@ services:
       - "FPM=false" # Do not start FPM and workers
 
   web:
-    image: epuzanov/misp-web:latest
+    image: epuzanov/misp:latest
     restart: always
     read_only: true
-    build:
-        context: web/.
     tmpfs:
       - /run
       - /var/cache/nginx

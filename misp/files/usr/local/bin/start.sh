@@ -1,6 +1,5 @@
 #!/bin/bash
 
-PATH_TO_MISP=/var/www/MISP
 PATH_TO_MISP_CONFIG=${PATH_TO_MISP}/app/Config
 CAKE=${PATH_TO_MISP}/app/Console/cake
 
@@ -67,6 +66,8 @@ init_misp_config() {
         cp ${PATH_TO_MISP}/save/Config/config.default.php ${PATH_TO_MISP_CONFIG}/config.php
         chmod 640 ${PATH_TO_MISP_CONFIG}/*
     fi
+    sed -i "s/www-data/${WWW_USER}/" ${PATH_TO_MISP_CONFIG}/config.php
+    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/*
 }
 
 init_mysql() {
@@ -105,28 +106,6 @@ init_mysql() {
     fi
 }
 
-init_misp_persistent_storage() {
-    for dir_name in cache/feeds cache/ingest cache/models cache/persistent cache/views cached_exports/rpz files logs resque sessions yara
-    do
-        if [ ! -d ${PATH_TO_MISP}/app/tmp/${dir_name} ]
-        then
-            mkdir -p ${PATH_TO_MISP}/app/tmp/${dir_name}
-        fi
-    done
-
-    mkdir -p ${PATH_TO_MISP}/app/files/attachments ${PATH_TO_MISP}/app/files/scripts/tmp ${PATH_TO_MISP}/app/files/terms ${PATH_TO_MISP}/app/files/webroot/files ${PATH_TO_MISP}/app/files/webroot/img/custom ${PATH_TO_MISP}/app/files/webroot/img/orgs
-    [ ! -d ${PATH_TO_MISP}/app/files/community-metadata ] && cp -r ${PATH_TO_MISP}/save/files/community-metadata ${PATH_TO_MISP}/app/files/community-metadata
-    [ ! -d ${PATH_TO_MISP}/app/files/feed-metadata ] && cp -r ${PATH_TO_MISP}/save/files/feed-metadata ${PATH_TO_MISP}/app/files/feed-metadata
-    [ ! -d ${PATH_TO_MISP}/app/files/misp-decaying-models ] && git clone --depth 1 https://github.com/MISP/misp-decaying-models.git ${PATH_TO_MISP}/app/files/misp-decaying-models
-    [ ! -d ${PATH_TO_MISP}/app/files/misp-galaxy ] && git clone --depth 1 https://github.com/MISP/misp-galaxy.git ${PATH_TO_MISP}/app/files/misp-galaxy
-    [ ! -d ${PATH_TO_MISP}/app/files/misp-objects ] && git clone --depth 1 https://github.com/MISP/misp-objects.git ${PATH_TO_MISP}/app/files/misp-objects
-    [ ! -d ${PATH_TO_MISP}/app/files/misp-workflow-blueprints ] && git clone --depth 1 https://github.com/MISP/misp-workflow-blueprints.git ${PATH_TO_MISP}/app/files/misp-workflow-blueprints
-    [ ! -d ${PATH_TO_MISP}/app/files/noticelists ] && git clone --depth 1 https://github.com/MISP/misp-noticelist.git ${PATH_TO_MISP}/app/files/noticelists
-    [ ! -d ${PATH_TO_MISP}/app/files/taxonomies ] && git clone --depth 1 https://github.com/MISP/misp-taxonomies.git ${PATH_TO_MISP}/app/files/taxonomies
-    [ ! -d ${PATH_TO_MISP}/app/files/warninglists ] && git clone --depth 1 https://github.com/MISP/misp-warninglists.git ${PATH_TO_MISP}/app/files/warninglists
-    git -C ${PATH_TO_MISP} submodule update --recursive
-}
-
 update_GOWNT() {
     ${CAKE} Admin updateGalaxies
     ${CAKE} Admin updateTaxonomies
@@ -136,8 +115,35 @@ update_GOWNT() {
 }
 
 sync_persistent_directories() {
+    for dir_name in cache/feeds cache/ingest cache/models cache/persistent cache/views cached_exports/rpz files logs resque sessions yara
+    do
+        if [ ! -d ${PATH_TO_MISP}/app/tmp/${dir_name} ]
+        then
+            mkdir -p ${PATH_TO_MISP}/app/tmp/${dir_name}
+        fi
+    done
+
+    for dir_name in `ls -1 ${PATH_TO_MISP}/save/files`
+    do
+        if [ ! -d ${PATH_TO_MISP}/app/files/${dir_name} ]
+        then
+            cp -r ${PATH_TO_MISP}/save/files/${dir_name} ${PATH_TO_MISP}/app/files/${dir_name}
+        fi
+    done
+
     rsync -a --delete --exclude=/tmp ${PATH_TO_MISP}/save/files/scripts/ ${PATH_TO_MISP}/app/files/scripts
-    rsync -a ${PATH_TO_MISP}/save/orgs/ ${PATH_TO_MISP}/app/webroot/img/orgs
+
+    mkdir -p ${PATH_TO_MISP}/app/files/attachments ${PATH_TO_MISP}/app/files/scripts/tmp ${PATH_TO_MISP}/app/files/terms ${PATH_TO_MISP}/app/files/webroot/files ${PATH_TO_MISP}/app/files/webroot/img/custom
+    [ ! -d ${PATH_TO_MISP}/app/files/misp-decaying-models/.git ] && git clone https://github.com/MISP/misp-decaying-models.git ${PATH_TO_MISP}/app/files/misp-decaying-models
+    [ ! -d ${PATH_TO_MISP}/app/files/misp-galaxy/.git ] && git clone https://github.com/MISP/misp-galaxy.git ${PATH_TO_MISP}/app/files/misp-galaxy
+    [ ! -d ${PATH_TO_MISP}/app/files/misp-objects/.git ] && git clone https://github.com/MISP/misp-objects.git ${PATH_TO_MISP}/app/files/misp-objects
+    [ ! -d ${PATH_TO_MISP}/app/files/misp-workflow-blueprints/.git ] && git clone https://github.com/MISP/misp-workflow-blueprints.git ${PATH_TO_MISP}/app/files/misp-workflow-blueprints
+    [ ! -d ${PATH_TO_MISP}/app/files/noticelists/.git ] && git clone https://github.com/MISP/misp-noticelist.git ${PATH_TO_MISP}/app/files/noticelists
+    [ ! -d ${PATH_TO_MISP}/app/files/taxonomies/.git ] && git clone https://github.com/MISP/misp-taxonomies.git ${PATH_TO_MISP}/app/files/taxonomies
+    [ ! -d ${PATH_TO_MISP}/app/files/warninglists/.git ] && git clone https://github.com/MISP/misp-warninglists.git ${PATH_TO_MISP}/app/files/warninglists
+    git -C ${PATH_TO_MISP} submodule update --progress --recursive app
+    chown -R ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}/app/files/
+    chown -R ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}/app/tmp/
 }
 
 setup_gnupg() {
@@ -160,14 +166,17 @@ setup_gnupg() {
     then
         ${GPG_BINARY} --homedir ${PATH_TO_MISP_CONFIG}/.gnupg --export --armor ${GPG_EMAIL_ADDRESS} > ${PATH_TO_MISP}/app/files/webroot/gpg.asc
     fi
+    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/.gnupg/*
+    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}/app/files/webroot/gpg.asc
 }
 
 set_config_defaults() {
     # IF you have logged in prior to running this, it will fail but the fail is NON-blocking
-    ${CAKE} userInit -q
+    sudo -u ${WWW_USER} ${CAKE} user init
 
     # This makes sure all Database upgrades are done, without logging in.
-    ${CAKE} Admin runUpdates
+    sudo -u ${WWW_USER} ${CAKE} Admin runUpdates
+
 
     # Tune global time outs
     ${CAKE} Admin setSetting "Session.autoRegenerate" 0
@@ -178,7 +187,7 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "MISP.tmpdir" "${PATH_TO_MISP}/app/tmp"
 
     # Change base url, either with this CLI command or in the UI
-    [[ ! -z ${MISP_BASEURL} ]] && ${CAKE} Baseurl ${MISP_BASEURL}
+    [[ ! -z ${MISP_BASEURL} ]] && ${CAKE} Admin setSetting "MISP.baseurl" ${MISP_BASEURL}
     [[ ! -z ${MISP_BASEURL} ]] && ${CAKE} Admin setSetting "MISP.external_baseurl" ${MISP_BASEURL}
 
     # Enable GnuPG
@@ -186,7 +195,6 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "GnuPG.homedir" "${PATH_TO_MISP_CONFIG}/.gnupg"
     ${CAKE} Admin setSetting "GnuPG.password" "${GPG_PASSPHRASE}"
     ${CAKE} Admin setSetting "GnuPG.obscure_subject" true
-    ${CAKE} Admin setSetting "GnuPG.binary" "${GPG_BINARY}"
 
     # Enable installer org and tune some configurables
     ${CAKE} Admin setSetting "MISP.host_org_id" 1
@@ -247,7 +255,7 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "Plugin.CustomAuth_disable_logout" false
 
     # RPZ Plugin settings
-    ${CAKE} Admin setSetting "Plugin.RPZ_policy" "DROP"
+    ${CAKE} Admin setSetting "Plugin.RPZ_policy" 0
     ${CAKE} Admin setSetting "Plugin.RPZ_walled_garden" "127.0.0.1"
     ${CAKE} Admin setSetting "Plugin.RPZ_serial" "\$date00"
     ${CAKE} Admin setSetting "Plugin.RPZ_refresh" "2h"
@@ -335,8 +343,8 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "MISP.block_event_alert" false
     ${CAKE} Admin setSetting "MISP.block_event_alert_tag" "no-alerts=\"true\""
     ${CAKE} Admin setSetting "MISP.block_old_event_alert" false
-    ${CAKE} Admin setSetting "MISP.block_old_event_alert_age" ""
-    ${CAKE} Admin setSetting "MISP.block_old_event_alert_by_date" ""
+    ${CAKE} Admin setSetting "MISP.block_old_event_alert_age" 0
+    ${CAKE} Admin setSetting "MISP.block_old_event_alert_by_date" 0
     ${CAKE} Admin setSetting "MISP.event_alert_republish_ban" false
     ${CAKE} Admin setSetting "MISP.event_alert_republish_ban_threshold" 5
     ${CAKE} Admin setSetting "MISP.event_alert_republish_ban_refresh_on_retry" false
@@ -380,36 +388,36 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "SimpleBackgroundJobs.redis_password" "${REDIS_PASSWORD}"
 
     # Set MISP Live
-    ${CAKE} Live "1"
+    ${CAKE} Admin Live 1
+    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/config.php
 }
 
-if [ "${FPM}" != false ]
+_term() {
+    if [ -f /run/crond.pid ]
+    then
+        kill -TERM `cat /run/crond.pid` 2>/dev/null
+    fi
+    if [ -f /run/php7.4-fpm.pid ]
+    then
+        if [ -f /var/www/MISP/app/files/scripts/tmp/mispzmq.pid ]
+        then
+            kill -TERM `cat /var/www/MISP/app/files/scripts/tmp/mispzmq.pid` 2>/dev/null
+        fi
+        USER=${WWW_USER} /var/www/MISP/app/Console/worker/stop.sh
+    fi
+    if [ "${ppid}" ]
+    then
+        kill -TERM "${ppid}" 2>/dev/null
+    fi
+}
+
+trap _term SIGTERM
+
+if [ "${CRON}" == true ]
 then
-    if [ ! -f ${PATH_TO_MISP_CONFIG}/config.php ]
-    then
-        echo "Setup MySQL..." && init_mysql
-        if [ ! -d ${PATH_TO_MISP}/app/files/attachments ]
-        then
-            echo "Configure MISP | Initialize misp persistent storage..." && init_misp_persistent_storage
-        fi
-        echo "Configure MISP | Initialize misp base config..." && init_misp_config
-        echo "Configure MISP | Set defaults in config.php..." && set_config_defaults
-        echo ""
-        echo "Configure MISP | Updating Galaxies, ObjectTemplates, Warninglists, Noticelists and Templates..." && update_GOWNT
-    fi
-    echo "Configure MISP | Sync webroot and files/scripts directories..." && sync_persistent_directories
-    if [ ! -d ${PATH_TO_MISP_CONFIG}/.gnupg ]
-    then
-        echo "Configure MISP | Generate GnuPG key..." && setup_gnupg
-    fi
-    for dir_name in `ls -1 ${PATH_TO_MISP}/save/files`
-    do
-        if [ ! -d ${PATH_TO_MISP}/save/files/${dir_name} ]
-        then
-            cp -r ${PATH_TO_MISP}/save/files/${dir_name} ${PATH_TO_MISP}/app/files/${dir_name}
-        fi
-    done
-    git -C ${PATH_TO_MISP} submodule update --progress --recursive app
+    # Import Cron configuration
+    crontab /etc/cron.d/misp
+    cron
 fi
 
 if [ "${CRON}" != false ] && [ ! -d /var/spool/cron/crontabs ]
@@ -418,4 +426,28 @@ then
     chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
 fi
 
-exec "$@"
+if [ "${FPM}" != false ]
+then
+    echo "Configure MISP | Sync persistent storage..." && sync_persistent_directories
+    if [ ! -f ${PATH_TO_MISP_CONFIG}/config.php ]
+    then
+        echo "Configure MISP | Setup MySQL..." && init_mysql
+        echo "Configure MISP | Initialize misp base config..." && init_misp_config
+        echo "Configure MISP | Set defaults in config.php..." && set_config_defaults
+        echo ""
+        echo "Configure MISP | Updating Galaxies, ObjectTemplates, Warninglists, Noticelists and Templates..." && update_GOWNT
+    fi
+    if [ ! -d ${PATH_TO_MISP_CONFIG}/.gnupg ]
+    then
+        echo "Configure MISP | Generate GnuPG key..." && setup_gnupg
+    fi
+    sudo -u ${WWW_USER} /var/www/MISP/app/Console/worker/start.sh
+    /usr/sbin/php-fpm7.4 -F &
+else
+    touch /var/www/MISP/app/tmp/logs/cron.log
+    tail -f /var/www/MISP/app/tmp/logs/cron.log &
+fi
+
+ppid=$!
+wait ${ppid}
+exit 0

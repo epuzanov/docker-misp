@@ -1,10 +1,12 @@
-FROM debian:bullseye-slim as build
+FROM nginx:stable-bullseye as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.183
+    ARG MISP_TAG=v2.4.186
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
-    ARG WWW_USER=www-data
+    ARG WWW_USER=nginx
+    ENV PATH_TO_MISP=${PATH_TO_MISP}
+    ENV WWW_USER=${WWW_USER}
 
     # OS Packages
     RUN apt-get update; apt-get install -y --no-install-recommends \
@@ -127,27 +129,27 @@ FROM debian:bullseye-slim as build
         mkdir save && \
         mv app/Config save/Config && \
         mv app/files save/files && \
-        mv app/webroot/img/orgs save/orgs && \
         chmod -R g+ws save/files/scripts/tmp && \
         mkdir -p app/Config app/files && \
         rm -rf app/webroot/files app/webroot/img/custom app/Plugin/CakeResque/Config/config.php app/tmp/* && \
         ln -s ${PATH_TO_MISP}/app/Config/resque_config.php ${PATH_TO_MISP}/app/Plugin/CakeResque/Config/config.php && \
         ln -s ${PATH_TO_MISP}/app/files/webroot/files ${PATH_TO_MISP}/app/webroot/files && \
         ln -s ${PATH_TO_MISP}/app/files/webroot/img/custom ${PATH_TO_MISP}/app/webroot/img/custom && \
-        ln -s ${PATH_TO_MISP}/app/files/webroot/img/orgs ${PATH_TO_MISP}/app/webroot/img/orgs && \
         ln -s ${PATH_TO_MISP}/app/files/webroot/gpg.asc ${PATH_TO_MISP}/app/webroot/gpg.asc
 
     RUN cd ${PATH_TO_MISP}/app && \
         chmod 0755 composer.phar && \
         ./composer.phar update
 
-FROM debian:bullseye-slim
+FROM nginx:stable-bullseye
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.183
+    ARG MISP_TAG=v2.4.186
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
-    ARG WWW_USER=www-data
+    ARG WWW_USER=nginx
+    ENV PATH_TO_MISP=${PATH_TO_MISP}
+    ENV WWW_USER=${WWW_USER}
 
     # OS Packages
     RUN apt-get update; apt-get install -y --no-install-recommends \
@@ -210,6 +212,7 @@ FROM debian:bullseye-slim
         sed -i "s/;decorate_workers_output/decorate_workers_output/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
         sed -i "s/;clear_env/clear_env/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
         sed -i "s/;access.log .*$/access.log = \/proc\/self\/fd\/1/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
+        sed -i "s/www-data/${WWW_USER}/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
         sed -i "s/\/var\/log\/php.\..-fpm\.log/\/proc\/self\/fd\/2/" /etc/php/${PHP_VER}/fpm/php-fpm.conf && \
         sed -i "s/run\/php/run/" /etc/php/${PHP_VER}/fpm/php-fpm.conf
 
@@ -249,12 +252,6 @@ FROM debian:bullseye-slim
     # Change Work directory
     WORKDIR ${PATH_TO_MISP}
 
-    ENTRYPOINT [ "/docker-entrypoint.sh" ]
-
-    USER ${WWW_USER}
-
     VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp"]
 
     EXPOSE 9000
-
-    CMD ["/start.sh"]
