@@ -4,8 +4,8 @@ FROM nginx:stable-bullseye as build
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
-    ARG WWW_USER=nginx
     ENV PATH_TO_MISP=${PATH_TO_MISP}
+    ARG WWW_USER=www-data
     ENV WWW_USER=${WWW_USER}
 
     # OS Packages
@@ -23,6 +23,7 @@ FROM nginx:stable-bullseye as build
         php-apcu \
         php-bcmath \
         php-cli \
+        php-curl \
         php-fpm \
         php-gd \
         php-gnupg \
@@ -34,7 +35,7 @@ FROM nginx:stable-bullseye as build
         php-redis \
         php-xml \
         php-zip \
-        php7.4-opcache \
+        php${PHP_VER}-opcache \
         python3 \
         python3-antlr4 \
         python3-brotli \
@@ -67,7 +68,6 @@ FROM nginx:stable-bullseye as build
         librdkafka-dev \
         libsimdjson-dev \
         make \
-        php-curl \
         php-dev \
         php-pear \
         python3-dev \
@@ -81,8 +81,8 @@ FROM nginx:stable-bullseye as build
     # build brotli
     RUN git clone --recursive --depth=1 https://github.com/kjdev/php-ext-brotli.git && \
         cd php-ext-brotli && \
-        phpize7.4 && \
-        ./configure --with-libbrotli --with-php-config=/usr/bin/php-config7.4 && \
+        phpize${PHP_VER} && \
+        ./configure --with-libbrotli --with-php-config=/usr/bin/php-config${PHP_VER} && \
         make && \
         make install
 
@@ -147,8 +147,8 @@ FROM nginx:stable-bullseye
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
-    ARG WWW_USER=nginx
     ENV PATH_TO_MISP=${PATH_TO_MISP}
+    ARG WWW_USER=www-data
     ENV WWW_USER=${WWW_USER}
 
     # OS Packages
@@ -166,6 +166,7 @@ FROM nginx:stable-bullseye
         php-apcu \
         php-bcmath \
         php-cli \
+        php-curl \
         php-fpm \
         php-gd \
         php-gnupg \
@@ -177,7 +178,7 @@ FROM nginx:stable-bullseye
         php-redis \
         php-xml \
         php-zip \
-        php7.4-opcache \
+        php${PHP_VER}-opcache \
         python3 \
         python3-antlr4 \
         python3-brotli \
@@ -214,7 +215,8 @@ FROM nginx:stable-bullseye
         sed -i "s/;access.log .*$/access.log = \/proc\/self\/fd\/1/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
         sed -i "s/www-data/${WWW_USER}/" /etc/php/${PHP_VER}/fpm/pool.d/www.conf && \
         sed -i "s/\/var\/log\/php.\..-fpm\.log/\/proc\/self\/fd\/2/" /etc/php/${PHP_VER}/fpm/php-fpm.conf && \
-        sed -i "s/run\/php/run/" /etc/php/${PHP_VER}/fpm/php-fpm.conf
+        sed -i "s/run\/php/run/" /etc/php/${PHP_VER}/fpm/php-fpm.conf && \
+        sed -i "s/user nginx/user ${WWW_USER}/" /etc/nginx/nginx.conf
 
     # Python Modules
     COPY --from=build /usr/local/lib/python3.9/dist-packages /usr/local/lib/python3.9/dist-packages
@@ -244,7 +246,7 @@ FROM nginx:stable-bullseye
         chmod 777 /run && \
         chmod 777 /var/spool/cron && \
         chmod u+s /usr/sbin/cron && \
-        chmod u+s /usr/sbin/php-fpm7.4
+        chmod u+s /usr/sbin/php-fpm${PHP_VER}
 
     # Copy files
     COPY files/ /
@@ -254,4 +256,3 @@ FROM nginx:stable-bullseye
 
     VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp"]
 
-    EXPOSE 9000
