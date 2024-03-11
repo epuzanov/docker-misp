@@ -1,6 +1,6 @@
 FROM nginx:stable-bullseye as build
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.186
+    ARG MISP_TAG=v2.4.187
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
@@ -143,7 +143,7 @@ FROM nginx:stable-bullseye as build
 
 FROM nginx:stable-bullseye
     ENV DEBIAN_FRONTEND noninteractive
-    ARG MISP_TAG=v2.4.186
+    ARG MISP_TAG=v2.4.187
     ARG PHP_VER=7.4
     ARG PHP_API=20190902
     ARG PATH_TO_MISP=/var/www/MISP
