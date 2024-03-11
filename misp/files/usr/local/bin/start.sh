@@ -115,7 +115,7 @@ update_GOWNT() {
 }
 
 sync_persistent_directories() {
-    for dir_name in cache/feeds cache/ingest cache/models cache/persistent cache/views cached_exports/rpz files logs resque sessions yara
+    for dir_name in cache/feeds cache/ingest cache/models cache/persistent cache/views cached_exports/rpz files logs resque scripts sessions yara
     do
         if [ ! -d ${PATH_TO_MISP}/app/tmp/${dir_name} ]
         then
@@ -131,9 +131,9 @@ sync_persistent_directories() {
         fi
     done
 
-    rsync -a --delete --exclude=/tmp ${PATH_TO_MISP}/save/files/scripts/ ${PATH_TO_MISP}/app/files/scripts
+    rm -rf ${PATH_TO_MISP}/app/files/scripts
 
-    mkdir -p ${PATH_TO_MISP}/app/files/attachments ${PATH_TO_MISP}/app/files/scripts/tmp ${PATH_TO_MISP}/app/files/terms ${PATH_TO_MISP}/app/files/webroot/files ${PATH_TO_MISP}/app/files/webroot/img/custom
+    mkdir -p ${PATH_TO_MISP}/app/files/attachments ${PATH_TO_MISP}/app/files/terms ${PATH_TO_MISP}/app/files/webroot/files ${PATH_TO_MISP}/app/files/webroot/img/custom
     [ ! -d ${PATH_TO_MISP}/app/files/misp-decaying-models/.git ] && git clone https://github.com/MISP/misp-decaying-models.git ${PATH_TO_MISP}/app/files/misp-decaying-models
     [ ! -d ${PATH_TO_MISP}/app/files/misp-galaxy/.git ] && git clone https://github.com/MISP/misp-galaxy.git ${PATH_TO_MISP}/app/files/misp-galaxy
     [ ! -d ${PATH_TO_MISP}/app/files/misp-objects/.git ] && git clone https://github.com/MISP/misp-objects.git ${PATH_TO_MISP}/app/files/misp-objects
@@ -399,9 +399,9 @@ _term() {
     fi
     if [ -f /run/php7.4-fpm.pid ]
     then
-        if [ -f /var/www/MISP/app/files/scripts/tmp/mispzmq.pid ]
+        if [ -f /var/www/MISP/app/scripts/tmp/mispzmq.pid ]
         then
-            kill -TERM `cat /var/www/MISP/app/files/scripts/tmp/mispzmq.pid` 2>/dev/null
+            kill -TERM `cat /var/www/MISP/app/scripts/tmp/mispzmq.pid` 2>/dev/null
         fi
         USER=${WWW_USER} /var/www/MISP/app/Console/worker/stop.sh
     fi

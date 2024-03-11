@@ -116,13 +116,25 @@ FROM nginx:stable-bullseye as build
     # Build and install Python modules
     RUN pip3 install ${PATH_TO_MISP}/PyMISP && \
         cd ${PATH_TO_MISP}/app/files/scripts && \
-        for dir_name in mixbox python-cybox python-maec python-stix cti-python-stix2 misp-stix ; do cd $dir_name && python3 setup.py install && cd .. && rm -rf $dir_name && git submodule deinit --force $dir_name && git rm $dir_name ; done && \
+        for dir_name in mixbox python-cybox python-maec python-stix cti-python-stix2 ; do cd $dir_name && python3 setup.py bdist_wheel && pip3 install dist/* && cd .. && rm -rf $dir_name && git submodule deinit --force $dir_name && git rm $dir_name ; done && \
+        cd misp-stix && python3 setup.py bdist_wheel && pip3 install dist/* && cp -r misp_stix_converter /usr/local/lib/python3.9/dist-packages && cd .. && rm -rf misp-stix && git submodule deinit --force misp-stix && git rm misp-stix && \
         cd ${PATH_TO_MISP} && \
         for dir_name in PyMISP app/Lib/cakephp app/files/scripts/misp-opendata ; do mv $dir_name $dir_name\_tmp && git submodule deinit --force $dir_name && git rm $dir_name && mv $dir_name\_tmp $dir_name ; done && \
         for dir_name in misp-decaying-models misp-galaxy misp-objects misp-workflow-blueprints noticelists taxonomies warninglists ; do rm -rf ${PATH_TO_MISP}/app/files/$dir_name ${PATH_TO_MISP}/.git/modules/app/files/$dir_name && mkdir ${PATH_TO_MISP}/app/files/$dir_name && ln -s ../../../../app/files/$dir_name/.git ${PATH_TO_MISP}/.git/modules/app/files/$dir_name ; done && \
         rm -rf ${PATH_TO_MISP}/.git/modules/cti-python-stix2 ${PATH_TO_MISP}/.git/modules/PyMISP ${PATH_TO_MISP}/.git/modules/app/Lib ${PATH_TO_MISP}/.git/modules/app/files/scripts ${PATH_TO_MISP}/PyMISP/pymisp /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
         ln -s ${PATH_TO_MISP}/app/files/misp-objects /usr/local/lib/python3.9/dist-packages/pymisp/data/misp-objects && \
         ln -s /usr/local/lib/python3.9/dist-packages/pymisp ${PATH_TO_MISP}/PyMISP/pymisp
+
+    # Move files/scripts to the app
+    RUN grep -rl "files/scripts" ${PATH_TO_MISP}/app | xargs -i@ sed -i "s/files\/scripts/scripts/g" @ && \
+        grep -rl "files.\s*\.\s*DS\s*\.\s*.scripts" ${PATH_TO_MISP}/app | xargs -i@ sed -i "s/files.\s*\.\s*DS\s*\.\s*.scripts/scripts/" @ && \
+        sed -i "s/-3/-2/" ${PATH_TO_MISP}/app/files/scripts/stix2misp.py && \
+        cd ${PATH_TO_MISP}/app/files && \
+        mv ${PATH_TO_MISP}/app/files/scripts ${PATH_TO_MISP}/app && \
+        git submodule deinit --force scripts && \
+        git rm -r scripts && \
+        rm -rf ${PATH_TO_MISP}/app/scripts/tmp && \
+        ln -s ${PATH_TO_MISP}/app/tmp/scripts ${PATH_TO_MISP}/app/scripts/tmp
 
     USER ${WWW_USER}
 
@@ -134,7 +146,6 @@ FROM nginx:stable-bullseye as build
         mkdir save && \
         mv app/Config save/Config && \
         mv app/files save/files && \
-        chmod -R g+ws save/files/scripts/tmp && \
         mkdir -p app/Config app/files && \
         rm -rf app/webroot/files app/webroot/img/custom app/Plugin/CakeResque/Config/config.php app/tmp/* && \
         ln -s ${PATH_TO_MISP}/app/Config/resque_config.php ${PATH_TO_MISP}/app/Plugin/CakeResque/Config/config.php && \
