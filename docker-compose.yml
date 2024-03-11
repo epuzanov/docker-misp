@@ -61,7 +61,7 @@ services:
 
   misp:
     image: epuzanov/misp:latest
-    command: start.sh
+    command: ["start.sh", "fpm"]
     restart: always
     read_only: true
     build:
@@ -95,7 +95,7 @@ services:
 
   cron:
     image: epuzanov/misp:latest
-    command: start.sh
+    command: ["start.sh", "cron"]
     restart: always
     read_only: true
     depends_on:
@@ -109,9 +109,6 @@ services:
       - misp_files:/var/www/MISP/app/files
       - misp_tmp:/var/www/MISP/app/tmp
 #      - misp_cron:/etc/cron.d
-    environment:
-      - "CRON=true" # Start CRON
-      - "FPM=false" # Do not start FPM and workers
 
   web:
     image: epuzanov/misp:latest

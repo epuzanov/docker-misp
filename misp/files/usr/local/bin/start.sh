@@ -413,20 +413,20 @@ _term() {
 
 trap _term SIGTERM
 
-if [ "${CRON}" == true ]
+if [ -z $1 ] || [ "$1" == "cron" ]
 then
+    if [ ! -d /var/spool/cron/crontabs ]
+    then
+        sudo -u ${WWW_USER} mkdir -p /var/spool/cron/crontabs
+        chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
+    fi
     # Import Cron configuration
     sudo -u ${WWW_USER} crontab /etc/cron.d/misp
     sudo -u ${WWW_USER} cron
 fi
 
-if [ "${CRON}" != false ] && [ ! -d /var/spool/cron/crontabs ]
-then
-    mkdir -p /var/spool/cron/crontabs
-    chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
-fi
 
-if [ "${FPM}" != false ]
+if [ -z $1 ] || [ "$1" == "fpm" ]
 then
     echo "Configure MISP | Sync persistent storage..." && sync_persistent_directories
     if [ ! -f ${PATH_TO_MISP_CONFIG}/config.php ]
