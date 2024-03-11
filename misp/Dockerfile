@@ -17,6 +17,7 @@ FROM nginx:stable-bullseye as build
         libfuzzy2 \
         librdkafka1 \
         libsimdjson5 \
+        libzstd1 \
         mariadb-client-core-10.5 \
         openssl \
         php \
@@ -67,6 +68,7 @@ FROM nginx:stable-bullseye as build
         libfuzzy-dev \
         librdkafka-dev \
         libsimdjson-dev \
+        libzstd-dev \
         make \
         php-dev \
         php-pear \
@@ -95,6 +97,9 @@ FROM nginx:stable-bullseye as build
 
     # build simdjson
     RUN cp /usr/lib/x86_64-linux-gnu/libsimdjson.* /usr/lib && pecl install simdjson
+
+    # build zstd
+    RUN cp /usr/lib/x86_64-linux-gnu/libzstd.* /usr/lib && pecl install zstd
 
     # Download MISP code
     RUN git clone --depth 1 --branch ${MISP_TAG} https://github.com/MISP/MISP.git ${PATH_TO_MISP} && \
@@ -160,6 +165,7 @@ FROM nginx:stable-bullseye
         libfuzzy2 \
         librdkafka1 \
         libsimdjson5 \
+        libzstd1 \
         mariadb-client-core-10.5 \
         openssl \
         php \
@@ -226,16 +232,20 @@ FROM nginx:stable-bullseye
     COPY --from=build /usr/lib/php/${PHP_API}/rdkafka.so /usr/lib/php/${PHP_API}/rdkafka.so
     COPY --from=build /usr/lib/php/${PHP_API}/simdjson.so /usr/lib/php/${PHP_API}/simdjson.so
     COPY --from=build /usr/lib/php/${PHP_API}/ssdeep.so /usr/lib/php/${PHP_API}/ssdeep.so
-    RUN echo "extension=rdkafka.so" > "/etc/php/${PHP_VER}/mods-available/rdkafka.ini" && \
+    COPY --from=build /usr/lib/php/${PHP_API}/zstd.so /usr/lib/php/${PHP_API}/zstd.so
+    RUN echo "apc.enable_cli=1" >> "/etc/php/${PHP_VER}/mods-available/apcu.ini" && \
+        echo "extension=rdkafka.so" > "/etc/php/${PHP_VER}/mods-available/rdkafka.ini" && \
         echo "extension=simdjson.so" > "/etc/php/${PHP_VER}/mods-available/simdjson.ini" && \
         echo "extension=ssdeep.so" > "/etc/php/${PHP_VER}/mods-available/ssdeep.ini" && \
         echo "extension=brotli.so" > "/etc/php/${PHP_VER}/mods-available/brotli.ini" && \
+        echo "extension=zstd.so" > "/etc/php/${PHP_VER}/mods-available/zstd.ini" && \
         phpenmod gnupg && \
         phpenmod redis && \
         phpenmod brotli && \
         phpenmod rdkafka && \
         phpenmod simdjson && \
-        phpenmod ssdeep
+        phpenmod ssdeep && \
+        phpenmod zstd
 
     # Copy MISP Files
     COPY --chown=${WWW_USER}:${WWW_USER} --from=build ${PATH_TO_MISP} ${PATH_TO_MISP}
