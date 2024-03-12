@@ -166,7 +166,7 @@ setup_gnupg() {
     then
         ${GPG_BINARY} --homedir ${PATH_TO_MISP_CONFIG}/.gnupg --export --armor ${GPG_EMAIL_ADDRESS} > ${PATH_TO_MISP}/app/files/webroot/gpg.asc
     fi
-    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/.gnupg/*
+    chown -R ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/.gnupg
     chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}/app/files/webroot/gpg.asc
 }
 
