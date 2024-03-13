@@ -140,7 +140,10 @@ FROM nginx:stable-bullseye as build
 
     # Install composer plugins and vendors
     RUN cd ${PATH_TO_MISP}/app && \
-        php composer.phar install
+        php composer.phar install && \
+        php composer.phar require elasticsearch/elasticsearch && \
+        php composer.phar require aws/aws-sdk-php && \
+        php composer.phar require jakub-onderka/openid-connect-php
 
     RUN cd ${PATH_TO_MISP} && \
         mkdir save && \
