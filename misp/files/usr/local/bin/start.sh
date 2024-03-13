@@ -421,8 +421,8 @@ then
         chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
     fi
     # Import Cron configuration
-    sudo -u ${WWW_USER} crontab /etc/cron.d/misp
-    sudo -u ${WWW_USER} cron
+    sudo -u ${WWW_USER} -E crontab /etc/cron.d/misp
+    sudo -u ${WWW_USER} -E cron
 fi
 
 
@@ -441,7 +441,7 @@ then
     then
         echo "Configure MISP | Generate GnuPG key..." && setup_gnupg
     fi
-    sudo -u ${WWW_USER} /var/www/MISP/app/Console/worker/start.sh
+    sudo -u ${WWW_USER} -E /var/www/MISP/app/Console/worker/start.sh
     /usr/sbin/php-fpm7.4 -F &
 else
     touch /var/www/MISP/app/tmp/logs/cron.log
