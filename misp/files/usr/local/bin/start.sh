@@ -141,9 +141,9 @@ sync_persistent_directories() {
     [ ! -d ${PATH_TO_MISP}/app/files/noticelists/.git ] && git clone https://github.com/MISP/misp-noticelist.git ${PATH_TO_MISP}/app/files/noticelists
     [ ! -d ${PATH_TO_MISP}/app/files/taxonomies/.git ] && git clone https://github.com/MISP/misp-taxonomies.git ${PATH_TO_MISP}/app/files/taxonomies
     [ ! -d ${PATH_TO_MISP}/app/files/warninglists/.git ] && git clone https://github.com/MISP/misp-warninglists.git ${PATH_TO_MISP}/app/files/warninglists
-    git -C ${PATH_TO_MISP} submodule update --progress --recursive app
     chown -R ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}/app/files/
     chown -R ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP}/app/tmp/
+    sudo -u ${WWW_USER} -E git -C ${PATH_TO_MISP} submodule update --progress --recursive app
 }
 
 setup_gnupg() {
