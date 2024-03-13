@@ -275,5 +275,3 @@ FROM nginx:stable-bullseye
     # Change Work directory
     WORKDIR ${PATH_TO_MISP}
 
-    VOLUME ["/var/www/MISP/app/Config", "/var/www/MISP/app/files", "/var/www/MISP/app/tmp"]
-
