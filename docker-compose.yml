@@ -27,6 +27,7 @@ services:
 
   db:
     image: mariadb:latest
+    command: --innodb_buffer_pool_size=2G --innodb_io_capacity=1000 --innodb_log_file_size=600M --innodb_read_io_threads=16
     restart: always
     read_only: true
     environment:
