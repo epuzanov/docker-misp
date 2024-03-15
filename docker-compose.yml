@@ -11,14 +11,14 @@ services:
     restart: always
     read_only: true
     volumes:
-      - misp_redis:/data
+      - redis:/data
 
   clamav:
     image: clamav/clamav:latest
     restart: always
     read_only: true
     volumes:
-      - misp_clamdb:/var/lib/clamav
+      - clamdb:/var/lib/clamav
     tmpfs:
       - /run
       - /tmp
@@ -39,9 +39,9 @@ services:
       - /run/mysqld
       - /tmp
     volumes:
-      - misp_db:/var/lib/mysql
+      - db:/var/lib/mysql
 
-  misp-modules:
+  modules:
     image: epuzanov/misp-modules:latest
     restart: always
     read_only: true
@@ -60,9 +60,8 @@ services:
       - /run
       - /tmp
 
-  misp:
+  server:
     image: epuzanov/misp:latest
-    command: ["start.sh", "fpm"]
     restart: always
     read_only: true
     build:
@@ -74,14 +73,17 @@ services:
     depends_on:
       - redis
       - db
-      - misp-modules
+      - modules
     tmpfs:
       - /run
       - /tmp
+      - /var/cache/nginx
+      - /var/lib/nginx
+      - /var/spool/cron
     volumes:
-      - misp_conf:/var/www/MISP/app/Config
-      - misp_files:/var/www/MISP/app/files
-      - misp_tmp:/var/www/MISP/app/tmp
+      - conf:/var/www/MISP/app/Config
+      - files:/var/www/MISP/app/files
+      - tmp:/var/www/MISP/app/tmp
     environment:
       - "MISP_BASEURL=https://localhost"
       - "REDIS_FQDN=redis"
@@ -93,46 +95,15 @@ services:
 #      - "MYSQL_USER=misp"
 #      - "MYSQL_PASSWORD=The_minimum_password_length_is_17_characters"
 #      - "MYSQL_DATABASE=misp"
-
-  cron:
-    image: epuzanov/misp:latest
-    command: ["start.sh", "cron"]
-    restart: always
-    read_only: true
-    depends_on:
-      - misp
-    tmpfs:
-      - /run
-      - /tmp
-      - /var/spool/cron
-    volumes:
-      - misp_conf:/var/www/MISP/app/Config
-      - misp_files:/var/www/MISP/app/files
-      - misp_tmp:/var/www/MISP/app/tmp
-#      - misp_cron:/etc/cron.d
-
-  web:
-    image: epuzanov/misp:latest
-    restart: always
-    read_only: true
-    tmpfs:
-      - /run
-      - /var/cache/nginx
-    volumes:
-      - misp_certs:/etc/nginx/certs
-      - misp_files:/var/www/MISP/app/files
-    depends_on:
-      - misp
     ports:
       - 80:80
       - 443:443
 
 volumes:
-    misp_db:
-    misp_redis:
-    misp_clamdb:
-    misp_conf:
-#    misp_cron:
-    misp_files:
-    misp_tmp:
-    misp_certs:
+    db:
+    redis:
+    clamdb:
+    conf:
+#    cron:
+    files:
+    tmp:

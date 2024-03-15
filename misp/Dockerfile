@@ -1,4 +1,4 @@
-FROM nginx:stable-bullseye as build
+FROM debian:bullseye-slim as build
     ENV DEBIAN_FRONTEND noninteractive
     ARG MISP_TAG=v2.4.187
     ARG PHP_VER=7.4
@@ -19,6 +19,7 @@ FROM nginx:stable-bullseye as build
         libsimdjson5 \
         libzstd1 \
         mariadb-client-core-10.5 \
+        nginx \
         openssl \
         php \
         php-apcu \
@@ -56,6 +57,7 @@ FROM nginx:stable-bullseye as build
         rsync \
         ssdeep \
         sudo \
+        supervisor \
         unzip zip \
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
@@ -141,9 +143,14 @@ FROM nginx:stable-bullseye as build
     # Install composer plugins and vendors
     RUN cd ${PATH_TO_MISP}/app && \
         php composer.phar install && \
-        php composer.phar require elasticsearch/elasticsearch && \
-        php composer.phar require aws/aws-sdk-php && \
-        php composer.phar require jakub-onderka/openid-connect-php
+        php composer.phar require --with-all-dependencies elasticsearch/elasticsearch \
+            aws/aws-sdk-php \
+            jakub-onderka/openid-connect-php \
+            supervisorphp/supervisor \
+            guzzlehttp/guzzle \
+            php-http/message \
+            php-http/message-factory \
+            lstrojny/fxmlrpc
 
     RUN cd ${PATH_TO_MISP} && \
         mkdir save && \
@@ -160,7 +167,7 @@ FROM nginx:stable-bullseye as build
         chmod 0755 composer.phar && \
         ./composer.phar update
 
-FROM nginx:stable-bullseye
+FROM debian:bullseye-slim
     ENV DEBIAN_FRONTEND noninteractive
     ARG MISP_TAG=v2.4.187
     ARG PHP_VER=7.4
@@ -181,6 +188,7 @@ FROM nginx:stable-bullseye
         libsimdjson5 \
         libzstd1 \
         mariadb-client-core-10.5 \
+        nginx \
         openssl \
         php \
         php-apcu \
@@ -218,6 +226,7 @@ FROM nginx:stable-bullseye
         rsync \
         ssdeep \
         sudo \
+        supervisor \
         unzip zip \
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
@@ -265,8 +274,12 @@ FROM nginx:stable-bullseye
     COPY --chown=${WWW_USER}:${WWW_USER} --from=build ${PATH_TO_MISP} ${PATH_TO_MISP}
 
     # Prepare directories and files
-    RUN rm -f /etc/cron.d/.placeholder /etc/cron.d/* && \
-        ln -s /var/www/MISP/app/Config/.gnupg /var/www/.gnupg && \
+    RUN rm -rf /etc/cron.d/.placeholder /etc/cron.d/* /var/log/nginx && \
+        ln -s ${PATH_TO_MISP}/app/Config/.gnupg /var/www/.gnupg && \
+        ln -s ${PATH_TO_MISP}/app/tmp/logs /var/log/nginx && \
+        sed -i "s#/var/log/nginx/#${PATH_TO_MISP}/app/tmp/logs/nginx-#g" /etc/nginx/nginx.conf && \
+        mkdir -p /var/lib/nginx/body /var/lib/nginx/fastcgi /var/lib/nginx/proxy /var/lib/nginx/scgi /var/lib/nginx/uwsgi && \
+        chown -R ${WWW_USER}:root /var/lib/nginx && \
         chmod 777 /run && \
         chmod 777 /var/spool/cron && \
         chmod u+s /usr/sbin/cron && \
@@ -275,6 +288,13 @@ FROM nginx:stable-bullseye
     # Copy files
     COPY files/ /
 
+    # Update supervisor configs
+    RUN grep -rl "/var/www/MISP" /etc | xargs -i@ sed -i "s#/var/www/MISP#${PATH_TO_MISP}#g" @ && \
+        grep -rl "www-data" /etc/supervisor | xargs -i@ sed -i "s#www-data#${WWW_USER}#g" @
+
     # Change Work directory
     WORKDIR ${PATH_TO_MISP}
 
+    ENTRYPOINT [ "/docker-entrypoint.sh" ]
+
+    CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]

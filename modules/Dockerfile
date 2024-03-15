@@ -41,17 +41,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Build MISP and Install Modules
-    WORKDIR /srv
+    WORKDIR /src
 
-    RUN git clone --depth 1 https://github.com/stricaud/gtcaca.git /srv/gtcaca; \
-        mkdir -p /srv/gtcaca/build; cd /srv/gtcaca/build || exit; cmake .. && make install
+    RUN git clone --depth 1 https://github.com/stricaud/gtcaca.git /src/gtcaca; \
+        mkdir -p /src/gtcaca/build; cd /src/gtcaca/build || exit; cmake .. && make install
 
-    RUN git clone --depth 1 https://github.com/stricaud/faup.git /srv/faup; \
-        mkdir -p /srv/faup/build; cd /srv/faup/build || exit; cmake .. && make install; \
-        cd /srv/faup/src/lib/bindings/python || exit; pip3 install . --no-cache-dir
+    RUN git clone --depth 1 https://github.com/stricaud/faup.git /src/faup; \
+        mkdir -p /src/faup/build; cd /src/faup/build || exit; cmake .. && make install; \
+        cd /src/faup/src/lib/bindings/python || exit; pip3 install . --no-cache-dir
 
-    RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /srv/misp-modules; \
-        cd /srv/misp-modules || exit; pip3 install pyeti-python3; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
+    RUN git clone --branch ${MODULES_TAG} --depth 1  https://github.com/MISP/misp-modules.git /src/misp-modules; \
+        cd /src/misp-modules || exit; pip3 install pyeti-python3; pip3 install -I -r REQUIREMENTS --no-cache-dir; \
         pip3 install . --no-cache-dir
 
     RUN ldconfig; \

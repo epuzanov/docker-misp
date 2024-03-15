@@ -211,14 +211,14 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "Plugin.Enrichment_hover_popover_only" false
     ${CAKE} Admin setSetting "Plugin.Enrichment_hover_timeout" 150
     ${CAKE} Admin setSetting "Plugin.Enrichment_timeout" 300
-    ${CAKE} Admin setSetting "Plugin.Enrichment_services_url" "http://misp-modules"
+    ${CAKE} Admin setSetting "Plugin.Enrichment_services_url" "http://modules"
     ${CAKE} Admin setSetting "Plugin.Enrichment_services_port" 6666
     ${CAKE} Admin setSetting "Plugin.Enrichment_clamav_enabled" true
     ${CAKE} Admin setSetting "Plugin.Enrichment_clamav_connection" "clamav:3310"
 
     # Enable Import modules, set better timeout
     ${CAKE} Admin setSetting "Plugin.Import_services_enable" true
-    ${CAKE} Admin setSetting "Plugin.Import_services_url" "http://misp-modules"
+    ${CAKE} Admin setSetting "Plugin.Import_services_url" "http://modules"
     ${CAKE} Admin setSetting "Plugin.Import_services_port" 6666
     ${CAKE} Admin setSetting "Plugin.Import_timeout" 300
     ${CAKE} Admin setSetting "Plugin.Import_ocr_enabled" true
@@ -229,10 +229,16 @@ set_config_defaults() {
 
     # Enable Export modules, set better timeout
     ${CAKE} Admin setSetting "Plugin.Export_services_enable" true
-    ${CAKE} Admin setSetting "Plugin.Export_services_url" "http://misp-modules"
+    ${CAKE} Admin setSetting "Plugin.Export_services_url" "http://modules"
     ${CAKE} Admin setSetting "Plugin.Export_services_port" 6666
     ${CAKE} Admin setSetting "Plugin.Export_timeout" 300
     ${CAKE} Admin setSetting "Plugin.Export_pdfexport_enabled" true
+
+    # Enable Action modules
+    ${CAKE} Admin setSetting "Plugin.Action_services_enable" true
+    ${CAKE} Admin setSetting "Plugin.Action_services_url" "http://modules"
+    ${CAKE} Admin setSetting "Plugin.Action_services_port" 6666
+    ${CAKE} Admin setSetting "Plugin.Action_timeout" 300
 
     # Provisional Cortex tunes
     ${CAKE} Admin setSetting "Plugin.Cortex_services_enable" false
@@ -384,70 +390,49 @@ set_config_defaults() {
     ${CAKE} Admin setSetting "Security.username_in_response_header" true
 
     # Set redis settings for the Simple Background Jobs
+    ${CAKE} Admin setSetting "SimpleBackgroundJobs.enabled" true
     ${CAKE} Admin setSetting "SimpleBackgroundJobs.redis_host" "${REDIS_FQDN}"
     ${CAKE} Admin setSetting "SimpleBackgroundJobs.redis_password" "${REDIS_PASSWORD}"
+    ${CAKE} Admin setSetting "SimpleBackgroundJobs.supervisor_password" "PWD_CHANGE_ME"
 
     # Set MISP Live
     ${CAKE} Admin Live 1
     chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/config.php
 }
 
-_term() {
-    if [ -f /run/crond.pid ]
-    then
-        kill -TERM `cat /run/crond.pid` 2>/dev/null
-    fi
-    if [ -f /run/php7.4-fpm.pid ]
-    then
-        if [ -f /var/www/MISP/app/scripts/tmp/mispzmq.pid ]
-        then
-            kill -TERM `cat /var/www/MISP/app/scripts/tmp/mispzmq.pid` 2>/dev/null
-        fi
-        USER=${WWW_USER} /var/www/MISP/app/Console/worker/stop.sh
-    fi
-    if [ "${ppid}" ]
-    then
-        kill -TERM "${ppid}" 2>/dev/null
-    fi
-}
-
-trap _term SIGTERM
-
-if [ -z $1 ] || [ "$1" == "cron" ]
+mkdir -p ${PATH_TO_MISP_CONFIG}/ssl
+if [ ! -f ${PATH_TO_MISP_CONFIG}/ssl/cert.pem ] || [ ! -f ${PATH_TO_MISP_CONFIG}/ssl/key.pem ]
 then
-    if [ ! -d /var/spool/cron/crontabs ]
-    then
-        sudo -u ${WWW_USER} mkdir -p /var/spool/cron/crontabs
-        chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
-    fi
-    # Import Cron configuration
-    sudo -u ${WWW_USER} -E crontab /etc/cron.d/misp
-    sudo -u ${WWW_USER} -E cron
+    openssl req -x509 -subj '/CN=localhost' -nodes -newkey rsa:4096 -keyout ${PATH_TO_MISP_CONFIG}/ssl/key.pem -out ${PATH_TO_MISP_CONFIG}/ssl/cert.pem -days 365
+    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/ssl/cert.pem
+    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/ssl/key.pem
+fi
+if [ ! -f ${PATH_TO_MISP_CONFIG}/ssl/dhparams.pem ]
+then
+    openssl dhparam -out ${PATH_TO_MISP_CONFIG}/ssl/dhparams.pem 2048
+    chown ${WWW_USER}:${WWW_USER} ${PATH_TO_MISP_CONFIG}/ssl/dhparams.pem
 fi
 
-
-if [ -z $1 ] || [ "$1" == "fpm" ]
+if [ ! -d /var/spool/cron/crontabs ]
 then
-    echo "Configure MISP | Sync persistent storage..." && sync_persistent_directories
-    if [ ! -f ${PATH_TO_MISP_CONFIG}/config.php ]
-    then
-        echo "Configure MISP | Setup MySQL..." && init_mysql
-        echo "Configure MISP | Initialize misp base config..." && init_misp_config
-        echo "Configure MISP | Set defaults in config.php..." && set_config_defaults
-        echo ""
-        echo "Configure MISP | Updating Galaxies, ObjectTemplates, Warninglists, Noticelists and Templates..." && update_GOWNT
-    fi
-    if [ ! -d ${PATH_TO_MISP_CONFIG}/.gnupg ]
-    then
-        echo "Configure MISP | Generate GnuPG key..." && setup_gnupg
-    fi
-    sudo -u ${WWW_USER} -E /var/www/MISP/app/Console/worker/start.sh
-    /usr/sbin/php-fpm7.4 -F &
-else
-    touch /var/www/MISP/app/tmp/logs/cron.log
-    tail -f /var/www/MISP/app/tmp/logs/cron.log &
+    sudo -u ${WWW_USER} mkdir -p /var/spool/cron/crontabs
+    chmod u=rwx,g=wx,o=t /var/spool/cron/crontabs
+fi
+# Import Cron configuration
+sudo -u ${WWW_USER} -E crontab /etc/cron.d/misp
+
+echo "Configure MISP | Sync persistent storage..." && sync_persistent_directories
+if [ ! -f ${PATH_TO_MISP_CONFIG}/config.php ]
+then
+    echo "Configure MISP | Setup MySQL..." && init_mysql
+    echo "Configure MISP | Initialize misp base config..." && init_misp_config
+    echo "Configure MISP | Set defaults in config.php..." && set_config_defaults
+    echo ""
+    echo "Configure MISP | Updating Galaxies, ObjectTemplates, Warninglists, Noticelists and Templates..." && update_GOWNT
+fi
+if [ ! -d ${PATH_TO_MISP_CONFIG}/.gnupg ]
+then
+    echo "Configure MISP | Generate GnuPG key..." && setup_gnupg
 fi
 
-ppid=$!
-wait ${ppid}
-exit 0
+exec "$@"
